@@ -1,0 +1,439 @@
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  ArrowLeft, CheckCircle, PlayCircle, ShieldCheck,
+  Truck, XCircle, Camera, RefreshCw, Package,
+  Clock, AlertTriangle, X, Upload
+} from "lucide-react";
+import LoadingState from "../../components/ui/LoadingState";
+import { COLORS } from "../../utils/colors";
+import {
+  acceptVendorOrder,
+  getVendorOrder,
+  rejectVendorOrder,
+  updateOrderStatus,
+  uploadQcImages,
+  markOrderReady,
+} from "../../services/vendor.service";
+import type { VendorOrder } from "../../types/vendor";
+
+// Production pipeline steps
+const PIPELINE = [
+  { status: "assigned_vendor",   label: "Assigned",    color: COLORS.warning },
+  { status: "vendor_accepted",   label: "Accepted",    color: COLORS.info },
+  { status: "in_production",     label: "Production",  color: "#8b5cf6" },
+  { status: "qc_pending",        label: "QC Review",   color: "#f59e0b" },
+  { status: "ready_for_pickup",  label: "Ready",       color: COLORS.success },
+  { status: "out_for_delivery",  label: "Delivery",    color: COLORS.primary },
+  { status: "delivered",         label: "Delivered",   color: COLORS.success },
+];
+
+const STATUS_STYLE: Record<string, { color: string; bg: string; border: string }> = {
+  assigned_vendor:  { color: COLORS.warning,  bg: COLORS.warningBg,  border: COLORS.warningBorder },
+  vendor_accepted:  { color: COLORS.info,     bg: COLORS.infoBg,     border: COLORS.infoBorder },
+  in_production:    { color: "#8b5cf6",       bg: "#f5f3ff",         border: "#ddd6fe" },
+  qc_pending:       { color: "#f59e0b",       bg: "#fffbeb",         border: "#fde68a" },
+  ready_for_pickup: { color: COLORS.success,  bg: COLORS.successBg,  border: COLORS.successBorder },
+  out_for_delivery: { color: COLORS.primary,  bg: `${COLORS.primary}18`, border: `${COLORS.primary}40` },
+  delivered:        { color: COLORS.success,  bg: COLORS.successBg,  border: COLORS.successBorder },
+  cancelled:        { color: COLORS.error,    bg: COLORS.errorBg,    border: COLORS.errorBorder },
+};
+
+export default function JobDetailPage() {
+  const navigate = useNavigate();
+  const { id = "" } = useParams();
+  const [order, setOrder] = useState<VendorOrder | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [busyAction, setBusyAction] = useState("");
+
+  // Reject modal
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+
+  // QC upload modal
+  const [showQcModal, setShowQcModal] = useState(false);
+  const [qcImageUrls, setQcImageUrls] = useState("");
+  const [qcNote, setQcNote] = useState("");
+
+  // API 2: GET /api/vendor/orders/:id
+  const loadOrder = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const res = await getVendorOrder(id);
+      setOrder(res.data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load order");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { void loadOrder(); }, [id]);
+
+  const sc = order ? (STATUS_STYLE[order.status] || STATUS_STYLE.assigned_vendor) : STATUS_STYLE.assigned_vendor;
+
+  const pipelineIndex = useMemo(() =>
+    PIPELINE.findIndex(p => p.status === order?.status), [order]);
+
+  const canAccept = order?.status === "assigned_vendor";
+  const canStartProduction = order?.status === "vendor_accepted";
+  const canMarkQc = order?.status === "in_production";
+  const canMarkReady = order?.status === "qc_pending";
+  const isTerminal = ["delivered", "cancelled"].includes(order?.status || "");
+
+  // API 3: POST /api/vendor/orders/:id/accept
+  const handleAccept = async () => {
+    if (!order) return;
+    setBusyAction("accept");
+    try {
+      const res = await acceptVendorOrder(order._id);
+      setOrder(res.data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to accept order");
+    } finally {
+      setBusyAction("");
+    }
+  };
+
+  // API 4: POST /api/vendor/orders/:id/reject
+  const handleReject = async () => {
+    if (!order || !rejectReason.trim()) return;
+    setBusyAction("reject");
+    try {
+      const res = await rejectVendorOrder(order._id, rejectReason.trim());
+      setOrder(res.data);
+      setShowRejectModal(false);
+      setRejectReason("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to reject order");
+    } finally {
+      setBusyAction("");
+    }
+  };
+
+  // API 5: POST /api/vendor/orders/:id/status
+  const handleStatusUpdate = async (status: string, note?: string) => {
+    if (!order) return;
+    setBusyAction(status);
+    try {
+      const res = await updateOrderStatus(order._id, status, note);
+      setOrder(res.data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update status");
+    } finally {
+      setBusyAction("");
+    }
+  };
+
+  // API 6: POST /api/vendor/orders/:id/qc-upload
+  const handleQcUpload = async () => {
+    if (!order) return;
+    const urls = qcImageUrls.split("\n").map(u => u.trim()).filter(Boolean);
+    if (urls.length === 0) { setError("Enter at least one image URL"); return; }
+    setBusyAction("qc");
+    try {
+      const res = await uploadQcImages(order._id, urls, qcNote);
+      setOrder(res.data);
+      setShowQcModal(false);
+      setQcImageUrls("");
+      setQcNote("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to upload QC images");
+    } finally {
+      setBusyAction("");
+    }
+  };
+
+  // API 7: POST /api/vendor/orders/:id/ready
+  const handleMarkReady = async () => {
+    if (!order) return;
+    setBusyAction("ready");
+    try {
+      const res = await markOrderReady(order._id);
+      setOrder(res.data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to mark ready");
+    } finally {
+      setBusyAction("");
+    }
+  };
+
+  if (loading) return <LoadingState message="Loading order details" />;
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-black text-gray-900">Order Details</h1>
+          <p className="text-sm text-gray-500 mt-0.5">View and manage order</p>
+        </div>
+        <div className="flex items-center gap-2">
+            className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-gray-900 transition">
+            <ArrowLeft size={16} /> Back
+          </button>
+          <button onClick={() => void loadOrder()}
+            className="p-2 rounded-xl border border-gray-200 hover:border-gray-900 transition">
+            <RefreshCw size={14} className="text-gray-500" />
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="rounded-xl border px-4 py-3 text-sm flex items-center gap-2"
+          style={{ backgroundColor: COLORS.errorBg, borderColor: COLORS.errorBorder, color: COLORS.error }}>
+          <AlertTriangle size={14} /> {error}
+          <button onClick={() => setError("")} className="ml-auto"><X size={14} /></button>
+        </div>
+      )}
+
+      {/* Order Header */}
+      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="flex items-start justify-between gap-4 mb-5">
+          <div>
+            <p className="text-xl font-black text-gray-900 font-mono">
+              {order?.orderNumber || `#${id.slice(-8).toUpperCase()}`}
+            </p>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {order?.createdAt ? new Date(order.createdAt).toLocaleString() : "—"}
+            </p>
+          </div>
+          <span className="rounded-full border px-3 py-1.5 text-xs font-bold uppercase"
+            style={{ backgroundColor: sc.bg, color: sc.color, borderColor: sc.border }}>
+            {order?.status?.replace(/_/g, " ")}
+          </span>
+        </div>
+
+        {/* Pipeline Progress */}
+        <div className="mb-5">
+          <div className="flex items-center gap-1 overflow-x-auto pb-1">
+            {PIPELINE.map((step, i) => {
+              const done = i <= pipelineIndex;
+              const current = i === pipelineIndex;
+              return (
+                <div key={step.status} className="flex items-center gap-1 flex-shrink-0">
+                  <div className="flex flex-col items-center">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition"
+                      style={{
+                        backgroundColor: done ? step.color : "white",
+                        borderColor: done ? step.color : "#e5e7eb",
+                        color: done ? "white" : "#9ca3af",
+                        boxShadow: current ? `0 0 0 3px ${step.color}30` : "none",
+                      }}>
+                      {i + 1}
+                    </div>
+                    <p className="text-xs mt-1 font-semibold" style={{ color: done ? step.color : "#9ca3af" }}>
+                      {step.label}
+                    </p>
+                  </div>
+                  {i < PIPELINE.length - 1 && (
+                    <div className="w-6 h-0.5 mb-4 flex-shrink-0"
+                      style={{ backgroundColor: i < pipelineIndex ? COLORS.success : "#e5e7eb" }} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Financials */}
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
+            <p className="text-xs text-gray-500 mb-1">Total Amount</p>
+            <p className="text-xl font-black text-gray-900">₹{order?.total || 0}</p>
+          </div>
+          <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
+            <p className="text-xs text-gray-500 mb-1">Subtotal</p>
+            <p className="text-xl font-black text-gray-900">₹{order?.subtotal || 0}</p>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        {!isTerminal && (
+          <div className="flex flex-wrap gap-2">
+            {/* API 3: Accept */}
+            {canAccept && (
+              <>
+                <button onClick={() => setShowRejectModal(true)}
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold transition"
+                  style={{ backgroundColor: COLORS.errorBg, color: COLORS.error }}>
+                  <XCircle size={15} /> Reject
+                </button>
+                <button onClick={() => void handleAccept()} disabled={busyAction === "accept"}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition disabled:opacity-60"
+                  style={{ backgroundColor: COLORS.success }}>
+                  <CheckCircle size={15} />
+                  {busyAction === "accept" ? "Accepting..." : "Accept Order"}
+                </button>
+              </>
+            )}
+
+            {/* API 5: Start Production */}
+            {canStartProduction && (
+              <button onClick={() => void handleStatusUpdate("in_production", "Production started")}
+                disabled={busyAction === "in_production"}
+                className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition disabled:opacity-60"
+                style={{ backgroundColor: "#8b5cf6" }}>
+                <PlayCircle size={15} />
+                {busyAction === "in_production" ? "Starting..." : "Start Production"}
+              </button>
+            )}
+
+            {/* API 6: QC Upload */}
+            {canMarkQc && (
+              <>
+                <button onClick={() => setShowQcModal(true)}
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold transition"
+                  style={{ backgroundColor: "#fffbeb", color: "#f59e0b" }}>
+                  <Camera size={15} /> Upload QC Images
+                </button>
+                <button onClick={() => void handleStatusUpdate("qc_pending", "QC review pending")}
+                  disabled={busyAction === "qc_pending"}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition disabled:opacity-60"
+                  style={{ backgroundColor: "#f59e0b" }}>
+                  <ShieldCheck size={15} />
+                  {busyAction === "qc_pending" ? "Updating..." : "Mark QC Pending"}
+                </button>
+              </>
+            )}
+
+            {/* API 7: Mark Ready */}
+            {canMarkReady && (
+              <button onClick={() => void handleMarkReady()} disabled={busyAction === "ready"}
+                className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition disabled:opacity-60"
+                style={{ backgroundColor: COLORS.success }}>
+                <Truck size={15} />
+                {busyAction === "ready" ? "Updating..." : "Ready for Pickup"}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Order Items */}
+      {order?.items && order.items.length > 0 && (
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <Package size={16} style={{ color: COLORS.primary }} />
+            <h2 className="text-base font-bold text-gray-900">Order Items</h2>
+          </div>
+          <div className="space-y-3">
+            {order.items.map((item, i) => (
+              <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200">
+                <div>
+                  <p className="text-sm font-bold text-gray-900">{item.productName || "Item"}</p>
+                  <p className="text-xs text-gray-500">Qty: {item.quantity || 0}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          {order.notes && (
+            <div className="mt-3 p-3 rounded-xl border border-gray-200 bg-yellow-50">
+              <p className="text-xs font-bold text-yellow-700 mb-1">Order Notes</p>
+              <p className="text-sm text-yellow-800">{order.notes}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Timeline */}
+      {order?.timeline && order.timeline.length > 0 && (
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock size={16} style={{ color: COLORS.info }} />
+            <h2 className="text-base font-bold text-gray-900">Order Timeline</h2>
+          </div>
+          <div className="space-y-3">
+            {[...order.timeline].reverse().map((entry, i) => (
+              <div key={i} className="flex items-start gap-3">
+                <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0" style={{ backgroundColor: COLORS.primary }} />
+                <div className="flex-1 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                  <p className="text-sm font-bold text-gray-900 capitalize">{entry.status?.replace(/_/g, " ")}</p>
+                  {entry.note && <p className="text-xs text-gray-500 mt-0.5">{entry.note}</p>}
+                  {entry.timestamp && (
+                    <p className="text-xs text-gray-400 mt-1">{new Date(entry.timestamp).toLocaleString()}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Reject Modal — API 4 */}
+      {showRejectModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Reject Order</h3>
+              <button onClick={() => setShowRejectModal(false)}><X size={18} className="text-gray-400" /></button>
+            </div>
+            <div className="mb-5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Reason *</label>
+              <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)}
+                placeholder="Explain why you cannot fulfill this order..."
+                className="w-full h-28 rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-gray-900 transition resize-none" />
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setShowRejectModal(false)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
+                Cancel
+              </button>
+              <button onClick={() => void handleReject()} disabled={!rejectReason.trim() || busyAction === "reject"}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition disabled:opacity-60"
+                style={{ backgroundColor: COLORS.error }}>
+                {busyAction === "reject" ? "Rejecting..." : "Confirm Reject"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* QC Upload Modal — API 6 */}
+      {showQcModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Upload QC Images</h3>
+              <button onClick={() => setShowQcModal(false)}><X size={18} className="text-gray-400" /></button>
+            </div>
+            <div className="p-3 rounded-xl border mb-4"
+              style={{ backgroundColor: COLORS.infoBg, borderColor: COLORS.infoBorder }}>
+              <p className="text-xs font-bold" style={{ color: COLORS.info }}>
+                Upload up to 5 QC images. Enter one URL per line.
+              </p>
+            </div>
+            <div className="space-y-4 mb-5">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Image URLs (one per line)</label>
+                <textarea value={qcImageUrls} onChange={e => setQcImageUrls(e.target.value)}
+                  placeholder={"https://example.com/qc1.jpg\nhttps://example.com/qc2.jpg"}
+                  className="w-full h-28 rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-gray-900 transition resize-none font-mono" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">QC Note (optional)</label>
+                <input value={qcNote} onChange={e => setQcNote(e.target.value)}
+                  placeholder="Any notes about quality check..."
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-gray-900 transition" />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setShowQcModal(false)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
+                Cancel
+              </button>
+              <button onClick={() => void handleQcUpload()} disabled={!qcImageUrls.trim() || busyAction === "qc"}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white transition disabled:opacity-60"
+                style={{ backgroundColor: "#f59e0b" }}>
+                <Upload size={14} />
+                {busyAction === "qc" ? "Uploading..." : "Upload QC Images"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
