@@ -189,69 +189,81 @@ export default function SupportPage() {
       </div>
 
       {loading ? <LoadingState message="Loading support tickets" /> : (
-        <div className="grid gap-5 lg:grid-cols-2">
+        <div className="grid gap-5 lg:grid-cols-2" style={{ alignItems: "stretch" }}>
+
           {/* Ticket List — API 1 */}
-          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden flex flex-col" style={{ minHeight: "600px", maxHeight: "600px" }}>
-            <div className="p-4 border-b border-gray-100">
+          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden flex flex-col" style={{ height: "600px" }}>
+            {/* Header */}
+            <div className="p-4 border-b border-gray-100 flex-shrink-0">
               <h3 className="text-base font-bold text-gray-900">Tickets</h3>
             </div>
-            <div className="flex-1 overflow-y-auto p-2">
-              <div className="space-y-2">
-            {filteredTickets.map(ticket => {
-              const sc = STATUS_STYLE[ticket.status] || STATUS_STYLE.open;
-              const pc = PRIORITY_STYLE[ticket.priority] || PRIORITY_STYLE.medium;
-              const isActive = activeTicket?._id === ticket._id;
-              return (
-                <button key={ticket._id} onClick={() => void openTicket(ticket)}
-                  className="w-full rounded-xl border p-4 text-left transition hover:shadow-md"
-                  style={{
-                    borderColor: isActive ? COLORS.primary : "#f1f5f9",
-                    backgroundColor: isActive ? `${COLORS.primary}08` : "white",
-                    boxShadow: isActive ? `0 0 0 2px ${COLORS.primary}30` : undefined,
-                  }}>
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <p className="text-sm font-bold text-gray-900 line-clamp-1">{ticket.subject}</p>
-                    <span className="rounded-full border px-2 py-0.5 text-xs font-bold uppercase flex-shrink-0"
-                      style={{ backgroundColor: sc.bg, color: sc.color, borderColor: sc.border }}>
-                      {ticket.status.replace("_", " ")}
-                    </span>
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-3">
+              {filteredTickets.length > 0 ? (
+                <div className="space-y-2">
+                  {filteredTickets.map(ticket => {
+                    const sc = STATUS_STYLE[ticket.status] || STATUS_STYLE.open;
+                    const pc = PRIORITY_STYLE[ticket.priority] || PRIORITY_STYLE.medium;
+                    const isActive = activeTicket?._id === ticket._id;
+                    return (
+                      <button key={ticket._id} onClick={() => void openTicket(ticket)}
+                        className="w-full rounded-xl border p-4 text-left transition hover:shadow-md"
+                        style={{
+                          borderColor: isActive ? COLORS.primary : "#f1f5f9",
+                          backgroundColor: isActive ? `${COLORS.primary}08` : "white",
+                          boxShadow: isActive ? `0 0 0 2px ${COLORS.primary}30` : undefined,
+                        }}>
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <p className="text-sm font-bold text-gray-900 line-clamp-1">{ticket.subject}</p>
+                          <span className="rounded-full border px-2 py-0.5 text-xs font-bold uppercase flex-shrink-0"
+                            style={{ backgroundColor: sc.bg, color: sc.color, borderColor: sc.border }}>
+                            {ticket.status.replace("_", " ")}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 line-clamp-2 mb-2">{ticket.description}</p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs px-2 py-0.5 rounded-full font-semibold capitalize"
+                            style={{ backgroundColor: pc.bg, color: pc.color }}>
+                            {ticket.priority}
+                          </span>
+                          <span className="text-xs text-gray-400 capitalize">{ticket.category.replace("_", " ")}</span>
+                          <span className="text-xs text-gray-400 ml-auto">{ticket.replies.length} replies</span>
+                          <ChevronRight size={12} className="text-gray-400" />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-center p-8">
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 bg-gray-100">
+                    <MessageSquare size={24} className="text-gray-400" />
                   </div>
-                  <p className="text-xs text-gray-500 line-clamp-2 mb-2">{ticket.description}</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs px-2 py-0.5 rounded-full font-semibold capitalize"
-                      style={{ backgroundColor: pc.bg, color: pc.color }}>
-                      {ticket.priority}
-                    </span>
-                    <span className="text-xs text-gray-400 capitalize">{ticket.category.replace("_", " ")}</span>
-                    <span className="text-xs text-gray-400 ml-auto">
-                      {ticket.replies.length} replies
-                    </span>
-                    <ChevronRight size={12} className="text-gray-400" />
-                  </div>
-                </button>
-              );
-            })}
-            {!filteredTickets.length && (
-              <div className="rounded-xl border border-gray-100 bg-white p-10 text-center">
-                <MessageSquare size={36} className="mx-auto text-gray-300 mb-3" />
-                <p className="text-sm text-gray-500 font-semibold">
-                  {tickets.length === 0 ? "No tickets yet. Raise your first ticket." : "No tickets match your filter."}
-                </p>
-              </div>
-            )}
-              </div>
+                  <p className="text-sm font-semibold text-gray-600">
+                    {tickets.length === 0 ? "No tickets yet" : "No tickets match your filter"}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {tickets.length === 0 ? "Raise your first support ticket" : "Try a different filter"}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Ticket Detail — API 4 + API 5 */}
-          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden flex flex-col" style={{ minHeight: "600px", maxHeight: "600px" }}>
+          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden flex flex-col" style={{ height: "600px" }}>
+            {/* Header */}
+            <div className="p-4 border-b border-gray-100 flex-shrink-0">
+              <h3 className="text-base font-bold text-gray-900">
+                {activeTicket ? activeTicket.subject : "Conversation"}
+              </h3>
+            </div>
             {activeTicket ? (
               <>
-                {/* Ticket Header */}
-                <div className="p-4 border-b border-gray-100">
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <h3 className="text-base font-bold text-gray-900">{activeTicket.subject}</h3>
-                    <span className="rounded-full border px-2.5 py-1 text-xs font-bold uppercase flex-shrink-0"
+                {/* Ticket Meta */}
+                <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0">
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <span className="rounded-full border px-2.5 py-1 text-xs font-bold uppercase"
                       style={{
                         backgroundColor: (STATUS_STYLE[activeTicket.status] || STATUS_STYLE.open).bg,
                         color: (STATUS_STYLE[activeTicket.status] || STATUS_STYLE.open).color,
@@ -259,9 +271,6 @@ export default function SupportPage() {
                       }}>
                       {activeTicket.status.replace("_", " ")}
                     </span>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-3">{activeTicket.description}</p>
-                  <div className="flex flex-wrap gap-2">
                     <span className="text-xs px-2 py-0.5 rounded-full font-semibold capitalize"
                       style={{ backgroundColor: (PRIORITY_STYLE[activeTicket.priority] || PRIORITY_STYLE.medium).bg, color: (PRIORITY_STYLE[activeTicket.priority] || PRIORITY_STYLE.medium).color }}>
                       {activeTicket.priority}
@@ -269,15 +278,11 @@ export default function SupportPage() {
                     <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 capitalize">
                       {activeTicket.category.replace("_", " ")}
                     </span>
-                    {activeTicket.orderId && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-mono">
-                        Order: {activeTicket.orderId}
-                      </span>
-                    )}
                     <span className="text-xs text-gray-400 ml-auto">
                       {activeTicket.createdAt ? new Date(activeTicket.createdAt).toLocaleDateString() : "—"}
                     </span>
                   </div>
+                  <p className="text-xs text-gray-500 mt-2 line-clamp-2">{activeTicket.description}</p>
                 </div>
 
                 {/* Replies */}
@@ -361,7 +366,6 @@ export default function SupportPage() {
                 <p className="text-xs text-gray-400 mt-1">Or raise a new ticket for support</p>
               </div>
             )}
-          </div>
         </div>
       )}
 
