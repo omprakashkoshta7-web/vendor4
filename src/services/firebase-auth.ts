@@ -24,34 +24,64 @@ type VerifyResponse = {
 };
 
 /**
- * Exchange a Firebase ID token for a backend JWT.
+ * Exchange a Firebase ID token for a backend JWT with retry logic.
  *
  * Sends the Firebase token in the Authorization header (not the body),
  * as required by the /api/auth/verify spec.
  */
-async function exchangeFirebaseToken(firebaseIdToken: string): Promise<VerifyResponse["data"]> {
-  const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.auth.verify}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${firebaseIdToken}`,
-    },
-    body: JSON.stringify({ role: "vendor" }),
-  });
+async function exchangeFirebaseToken(firebaseIdToken: string, retryCount = 0): Promise<VerifyResponse["data"]> {
+  const maxRetries = 3;
+  const baseDelay = 1000; // 1 second
 
-  const payload = (await response.json().catch(() => null)) as VerifyResponse | null;
+  try {
+    const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.auth.verify}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${firebaseIdToken}`,
+      },
+      body: JSON.stringify({ role: "vendor" }),
+    });
 
-  if (!response.ok) {
-    console.error("Token exchange failed:", { status: response.status, payload });
-    throw new Error(payload?.message || "Vendor login verification failed");
+    const payload = (await response.json().catch(() => null)) as VerifyResponse | null;
+
+    if (!response.ok) {
+      // Handle rate limiting (429) with retry
+      if (response.status === 429 && retryCount < maxRetries) {
+        const delay = baseDelay * Math.pow(2, retryCount); // Exponential backoff
+        console.warn(`Rate limited. Retrying in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return exchangeFirebaseToken(firebaseIdToken, retryCount + 1);
+      }
+
+      console.error("Token exchange failed:", { status: response.status, payload });
+      throw new Error(payload?.message || "Vendor login verification failed");
+    }
+
+    if (!payload?.data?.token) {
+      console.error("No token in response:", payload);
+      throw new Error("No token returned from server");
+    }
+
+    // If user data is missing, create a default user object
+    const user = payload.data.user || {
+      _id: "vendor_user",
+      email: "vendor@speedcopy.com",
+      role: "vendor",
+      name: "Vendor User",
+    };
+
+    return { ...payload.data, user };
+  } catch (error) {
+    // If it's a network error and we haven't exceeded retries, retry
+    if (retryCount < maxRetries && error instanceof TypeError) {
+      const delay = baseDelay * Math.pow(2, retryCount);
+      console.warn(`Network error. Retrying in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return exchangeFirebaseToken(firebaseIdToken, retryCount + 1);
+    }
+    throw error;
   }
-
-  if (!payload?.data?.token) {
-    console.error("No token in response:", payload);
-    throw new Error("No token returned from server");
-  }
-
-  return payload.data;
 }
 
 /**

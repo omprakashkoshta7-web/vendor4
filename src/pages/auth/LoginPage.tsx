@@ -43,7 +43,20 @@ export default function LoginPage() {
       navigate("/orders", { replace: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Login failed";
-      setError(message);
+      
+      // Provide user-friendly error messages
+      let displayError = message;
+      if (message.includes("Too many requests")) {
+        displayError = "Too many login attempts. Please wait a moment and try again.";
+      } else if (message.includes("invalid-credential")) {
+        displayError = "Invalid email or password. Please check and try again.";
+      } else if (message.includes("network") || message.includes("Network")) {
+        displayError = "Network error. Please check your connection and try again.";
+      } else if (message.includes("verification failed")) {
+        displayError = "Login verification failed. Please try again.";
+      }
+      
+      setError(displayError);
     } finally {
       setLoading(false);
     }
