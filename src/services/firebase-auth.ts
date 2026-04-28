@@ -4,7 +4,7 @@ import {
   signOut,
   type AuthError,
 } from "firebase/auth";
-import { API_ENDPOINTS } from "../config/api";
+import { API_BASE_URL, API_ENDPOINTS } from "../config/api";
 import { auth, isFirebaseConfigured } from "../config/firebase";
 import { clearAuthToken, setAuthToken } from "./api";
 
@@ -12,72 +12,87 @@ type VerifyResponse = {
   success: boolean;
   message: string;
   data: {
-    user: {
+    token: string;
+    user?: {
       _id: string;
       firebaseUid?: string;
       email: string;
       name?: string;
       role: string;
     };
-    token: string;
   };
 };
 
-async function verifyVendorToken(idToken: string) {
-  const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:4000"}${API_ENDPOINTS.auth.verify}`, {
+/**
+ * Exchange a Firebase ID token for a backend JWT.
+ *
+ * Sends the Firebase token in the Authorization header (not the body),
+ * as required by the /api/auth/verify spec.
+ */
+async function exchangeFirebaseToken(firebaseIdToken: string): Promise<VerifyResponse["data"]> {
+  const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.auth.verify}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${firebaseIdToken}`,
     },
-    body: JSON.stringify({ idToken, role: "vendor" }),
+    body: JSON.stringify({ role: "vendor" }),
   });
 
   const payload = (await response.json().catch(() => null)) as VerifyResponse | null;
 
-  if (!response.ok || !payload?.data) {
+  if (!response.ok) {
+    console.error("Token exchange failed:", { status: response.status, payload });
     throw new Error(payload?.message || "Vendor login verification failed");
+  }
+
+  if (!payload?.data?.token) {
+    console.error("No token in response:", payload);
+    throw new Error("No token returned from server");
   }
 
   return payload.data;
 }
 
+/**
+ * Sign in with Firebase email/password, then exchange the Firebase ID token
+ * for a short backend JWT. Stores the backend JWT — not the Firebase token.
+ */
 export async function loginWithFirebase(email: string, password: string) {
   if (!isFirebaseConfigured) {
     throw new Error("Firebase login is not configured for this vendor app");
   }
 
   try {
+    // Step 1: Firebase sign-in
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const idToken = await userCredential.user.getIdToken();
-    const data = await verifyVendorToken(idToken);
 
-    if (!data.token) {
-      await signOut(auth);
-      clearAuthToken();
-      localStorage.removeItem("vendor_session");
-      throw new Error("Vendor session token was not returned by the server");
-    }
+    // Step 2: Get Firebase ID token (used only once)
+    const firebaseIdToken = await userCredential.user.getIdToken();
 
-    if (data.user.role !== "vendor") {
-      await signOut(auth);
-      clearAuthToken();
-      localStorage.removeItem("vendor_session");
-      throw new Error("This Firebase account is not approved for vendor access");
-    }
+    // Step 3: Exchange for backend JWT
+    const data = await exchangeFirebaseToken(firebaseIdToken);
 
+    // Step 4: Store the backend JWT (not the Firebase token)
     setAuthToken(data.token);
+
     return data;
   } catch (error) {
     const authError = error as AuthError & { message?: string };
 
     if (authError.code === "auth/invalid-credential") {
-      throw new Error("Firebase rejected these credentials. Check the vendor account in the configured Firebase project.");
+      throw new Error(
+        "Firebase rejected these credentials. Check the vendor account in the configured Firebase project."
+      );
     }
 
     throw new Error(authError.message || "Vendor login failed");
   }
 }
 
+/**
+ * Sign out from Firebase and clear the stored backend JWT.
+ */
 export async function logoutFirebase() {
   try {
     await signOut(auth);
@@ -87,6 +102,15 @@ export async function logoutFirebase() {
   }
 }
 
+/**
+ * Sync the vendor auth session on app load.
+ *
+ * On Firebase auth state change:
+ * - If a user is present and no backend JWT is stored, re-exchange the token.
+ * - If no user, clear everything and call onUnauthenticated.
+ *
+ * This avoids re-verifying on every auth state tick when a valid JWT already exists.
+ */
 export function syncVendorAuthSession(onUnauthenticated: () => void) {
   let nullAuthGraceTimer: number | null = null;
 
@@ -101,7 +125,7 @@ export function syncVendorAuthSession(onUnauthenticated: () => void) {
     cleanupTimer();
 
     if (!firebaseUser) {
-      // Firebase can briefly emit `null` during hydration right after login.
+      // Firebase can briefly emit null during hydration right after login.
       // Give it a short grace window before forcing a logout redirect.
       nullAuthGraceTimer = window.setTimeout(() => {
         if (!auth.currentUser) {
@@ -113,11 +137,18 @@ export function syncVendorAuthSession(onUnauthenticated: () => void) {
       return;
     }
 
-    try {
-      const idToken = await firebaseUser.getIdToken();
-      const data = await verifyVendorToken(idToken);
+    // If we already have a backend JWT stored, trust it — no need to re-verify.
+    const { getAuthToken } = await import("./api");
+    if (getAuthToken()) {
+      return;
+    }
 
-      if (!data.token || data.user.role !== "vendor") {
+    // No JWT stored — re-exchange the Firebase token to get a fresh backend JWT.
+    try {
+      const firebaseIdToken = await firebaseUser.getIdToken();
+      const data = await exchangeFirebaseToken(firebaseIdToken);
+
+      if (!data.token) {
         clearAuthToken();
         localStorage.removeItem("vendor_session");
         onUnauthenticated();

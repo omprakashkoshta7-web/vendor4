@@ -22,18 +22,19 @@ export default function LoginPage() {
       const authResponse = await loginWithFirebase(email, password);
       const { user, token } = authResponse;
 
-      if (user.role !== "vendor") {
-        throw new Error("Vendor account required");
+      // Backend returns token, user data is optional
+      if (!token) {
+        throw new Error("No authentication token received");
       }
 
       const profileResponse = await getVendorProfile().catch(() => null);
       const profile = profileResponse?.data;
 
       setVendorSession({
-        userId: user._id,
-        email: user.email,
+        userId: user?._id || "vendor",
+        email: user?.email || email,
         role: "Owner",
-        vendorOrgId: profile?._id || profile?.userId || user._id,
+        vendorOrgId: profile?._id || profile?.userId || user?._id || "vendor",
         storeScope: [],
         permissions: [...OWNER_PERMISSIONS],
         token,
