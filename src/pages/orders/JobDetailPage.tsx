@@ -56,11 +56,6 @@ export default function JobDetailPage() {
   const [qcImageUrls, setQcImageUrls] = useState("");
   const [qcNote, setQcNote] = useState("");
 
-  // Status update modal
-  const [showStatusModal, setShowStatusModal] = useState(false);
-  const [statusNote, setStatusNote] = useState("");
-  const [targetStatus, setTargetStatus] = useState("");
-
   // API 2: GET /api/vendor/orders/:id
   const loadOrder = async () => {
     try {
@@ -125,8 +120,6 @@ export default function JobDetailPage() {
     try {
       const res = await updateOrderStatus(order._id, status, note);
       setOrder(res.data);
-      setShowStatusModal(false);
-      setStatusNote("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update status");
     } finally {

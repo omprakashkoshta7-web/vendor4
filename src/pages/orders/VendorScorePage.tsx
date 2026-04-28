@@ -146,7 +146,7 @@ export default function VendorScorePage() {
               <PolarAngleAxis dataKey="metric" tick={{ fontSize: 12, fill: "#6b7280" }} />
               <Radar name="Your Score" dataKey="score" stroke={COLORS.primary} fill={COLORS.primary} fillOpacity={0.2} strokeWidth={2.5} />
               <Radar name="Target" dataKey="target" stroke="#d1d5db" fill="transparent" strokeWidth={1.5} strokeDasharray="4 2" />
-              <Tooltip formatter={(v: any, name: string) => [`${v}%`, name]} />
+              <Tooltip formatter={(v: any) => [`${v}%`, "Score"]} />
             </RadarChart>
           </ResponsiveContainer>
           <div className="flex items-center gap-4 justify-center mt-2">

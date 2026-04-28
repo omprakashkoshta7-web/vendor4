@@ -28,10 +28,10 @@ interface Agreement {
 
 // ─── Doc Card ─────────────────────────────────────────────
 function DocCard({
-  title, description, fieldKey, numberValue, fileUrl,
+  title, description, numberValue, fileUrl,
   onNumberChange, onFileChange, uploading, editMode,
 }: {
-  title: string; description: string; fieldKey: string;
+  title: string; description: string;
   numberValue: string; fileUrl?: string;
   onNumberChange: (v: string) => void;
   onFileChange: (file: File) => void;
@@ -343,7 +343,6 @@ export default function LegalPage() {
         <DocCard
           title="GST Certificate"
           description="Goods & Services Tax registration"
-          fieldKey="gstCertificate"
           numberValue={gstNumber}
           fileUrl={docs?.legalDocuments?.gstCertificate}
           onNumberChange={setGstNumber}
@@ -354,7 +353,6 @@ export default function LegalPage() {
         <DocCard
           title="PAN Card"
           description="Permanent Account Number"
-          fieldKey="panCard"
           numberValue={panNumber}
           fileUrl={docs?.legalDocuments?.panCard}
           onNumberChange={setPanNumber}
@@ -365,7 +363,6 @@ export default function LegalPage() {
         <DocCard
           title="Company Registration"
           description="Certificate of Incorporation"
-          fieldKey="companyRegistrationCertificate"
           numberValue={companyRegNumber}
           fileUrl={docs?.legalDocuments?.companyRegistrationCertificate}
           onNumberChange={setCompanyRegNumber}

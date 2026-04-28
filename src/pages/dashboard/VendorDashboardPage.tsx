@@ -47,13 +47,12 @@ const VendorDashboardPage = () => {
           ? staffResponse.data.filter((s: { isActive: boolean }) => s.isActive).length 
           : 0;
 
-        // Backend returns: { balance, pendingSettlement, availableForWithdrawal }
-        const financeData = financeResponse.data;
+        const financeData = financeResponse.data || { balance: 0, pendingSettlement: 0, availableForWithdrawal: 0 };
         
         setMetrics({
           jobsClosed: 0, // Not available in current API
-          netPayout: financeData.balance || financeData.totalPaid || 0,
-          slaScore: scoreResponse.data.completionRate || scoreResponse.data.slaCompliance || 0,
+          netPayout: financeData.balance || 0,
+          slaScore: scoreResponse.data?.completionRate || 0,
           activeStaff: activeStaffCount,
         });
       } catch (err) {

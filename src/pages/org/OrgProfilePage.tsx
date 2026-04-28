@@ -42,19 +42,17 @@ function Field({
 
 // ─── Section Card ─────────────────────────────────────────
 function Section({
-  title, icon: Icon, children, accent,
+  title, icon: Icon, children,
 }: {
   title: string; icon: React.ComponentType<{ size?: number; className?: string }>;
-  children: React.ReactNode; accent?: string;
+  children: React.ReactNode;
 }) {
   return (
     <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
       <div className="mb-5 flex items-center gap-3">
-        <div
-          className="flex h-9 w-9 items-center justify-center rounded-xl"
-          style={{ backgroundColor: accent ? accent + "18" : "#f1f5f9" }}
-        >
-          <Icon size={17} style={{ color: accent || "#64748b" }} />
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+          style={{ backgroundColor: `${COLORS.primary}18` }}>
+          <Icon size={17} className="text-gray-600" />
         </div>
         <h2 className="text-base font-bold text-gray-900">{title}</h2>
       </div>
@@ -254,7 +252,7 @@ export default function OrgProfilePage() {
       </div>
 
       {/* Business Details — API 2 fields */}
-      <Section title="Business Details" icon={Building2} accent={COLORS.primary}>
+      <Section title="Business Details" icon={Building2}>
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Business Name" value={form?.businessName || ""} onChange={set("businessName")} disabled={!editMode} icon={Building2} placeholder="Your business name" />
           <Field label="Business Type" value={form?.businessType || ""} onChange={set("businessType")} disabled={!editMode} placeholder="e.g. Printing, Gifting" />
@@ -279,7 +277,7 @@ export default function OrgProfilePage() {
       </Section>
 
       {/* Compliance & Banking — API 2 fields */}
-      <Section title="Compliance & Banking" icon={CreditCard} accent="#8b5cf6">
+      <Section title="Compliance & Banking" icon={CreditCard}>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <Field label="GST Number" value={form?.gstNumber || ""} onChange={set("gstNumber")} disabled={!editMode} icon={Shield} placeholder="22AAAAA0000A1Z5" />

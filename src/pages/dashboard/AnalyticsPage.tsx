@@ -186,7 +186,7 @@ export default function AnalyticsPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6b7280" }} />
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6b7280" }} />
-              <Tooltip formatter={(v: any, name: string) => [v, name === "maxOrders" ? "Max Capacity" : "Current Load"]} />
+              <Tooltip formatter={(v: any) => [v, "Value"]} />
               <Bar dataKey="maxOrders" name="maxOrders" fill={`${COLORS.primary}40`} radius={[6, 6, 0, 0]} />
               <Bar dataKey="currentLoad" name="currentLoad" radius={[6, 6, 0, 0]}>
                 {capacityChartData.map((entry: any, i: number) => {
