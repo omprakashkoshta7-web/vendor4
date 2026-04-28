@@ -189,16 +189,21 @@ export default function SupportPage() {
       </div>
 
       {loading ? <LoadingState message="Loading support tickets" /> : (
-        <div className="grid gap-5 lg:grid-cols-[1fr_1.2fr]">
+        <div className="grid gap-5 lg:grid-cols-2">
           {/* Ticket List — API 1 */}
-          <div className="space-y-2">
+          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden flex flex-col" style={{ minHeight: "600px", maxHeight: "600px" }}>
+            <div className="p-4 border-b border-gray-100">
+              <h3 className="text-base font-bold text-gray-900">Tickets</h3>
+            </div>
+            <div className="flex-1 overflow-y-auto p-2">
+              <div className="space-y-2">
             {filteredTickets.map(ticket => {
               const sc = STATUS_STYLE[ticket.status] || STATUS_STYLE.open;
               const pc = PRIORITY_STYLE[ticket.priority] || PRIORITY_STYLE.medium;
               const isActive = activeTicket?._id === ticket._id;
               return (
                 <button key={ticket._id} onClick={() => void openTicket(ticket)}
-                  className="w-full rounded-2xl border p-4 text-left transition hover:shadow-md"
+                  className="w-full rounded-xl border p-4 text-left transition hover:shadow-md"
                   style={{
                     borderColor: isActive ? COLORS.primary : "#f1f5f9",
                     backgroundColor: isActive ? `${COLORS.primary}08` : "white",
@@ -227,17 +232,19 @@ export default function SupportPage() {
               );
             })}
             {!filteredTickets.length && (
-              <div className="rounded-2xl border border-gray-100 bg-white p-10 text-center">
+              <div className="rounded-xl border border-gray-100 bg-white p-10 text-center">
                 <MessageSquare size={36} className="mx-auto text-gray-300 mb-3" />
                 <p className="text-sm text-gray-500 font-semibold">
                   {tickets.length === 0 ? "No tickets yet. Raise your first ticket." : "No tickets match your filter."}
                 </p>
               </div>
             )}
+              </div>
+            </div>
           </div>
 
           {/* Ticket Detail — API 4 + API 5 */}
-          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden flex flex-col" style={{ minHeight: "400px" }}>
+          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden flex flex-col" style={{ minHeight: "600px", maxHeight: "600px" }}>
             {activeTicket ? (
               <>
                 {/* Ticket Header */}
