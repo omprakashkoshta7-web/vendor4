@@ -248,7 +248,7 @@ export default function SupportPage() {
             {activeTicket ? (
               <>
                 {/* Ticket Header */}
-                <div className="p-5 border-b border-gray-100">
+                <div className="p-4 border-b border-gray-100">
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <h3 className="text-base font-bold text-gray-900">{activeTicket.subject}</h3>
                     <span className="rounded-full border px-2.5 py-1 text-xs font-bold uppercase flex-shrink-0"
