@@ -10,6 +10,7 @@ import {
   HeadphonesIcon,
   LayoutDashboard,
   LogOut,
+  Menu,
   Printer,
   Search,
   Shield,
@@ -85,6 +86,7 @@ export default function VendorLayout() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [notifications, setNotifications] = useState<PortalNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -183,6 +185,7 @@ export default function VendorLayout() {
   return (
     <div className="admin-app-shell min-h-screen p-2 sm:p-3 md:p-4">
       <div className="admin-frame flex min-h-[calc(100vh-1rem)] overflow-hidden rounded-[24px] sm:min-h-[calc(100vh-1.5rem)] sm:rounded-[34px]">
+        {/* Desktop Sidebar */}
         <aside className="admin-sidebar hidden w-[236px] flex-shrink-0 lg:flex lg:flex-col">
           <div className="px-5 pb-6 pt-8">
             <div className="flex items-center gap-2">
@@ -236,19 +239,100 @@ export default function VendorLayout() {
           </div>
         </aside>
 
+        {/* Mobile Sidebar Overlay */}
+        {showMobileSidebar && (
+          <div 
+            className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+            onClick={() => setShowMobileSidebar(false)}
+          />
+        )}
+
+        {/* Mobile Sidebar */}
+        <aside className={`admin-sidebar-mobile fixed left-0 top-0 z-50 h-full w-[236px] flex-shrink-0 flex-col overflow-y-auto bg-gradient-to-b from-[#1e2535] to-[#171f2e] transition-transform duration-300 lg:hidden ${
+          showMobileSidebar ? "translate-x-0" : "-translate-x-full"
+        }`}>
+          <div className="px-5 pb-6 pt-8">
+            <div className="flex items-center justify-between gap-2">
+              <h1 className="text-[2.2rem] font-black lowercase leading-none tracking-tight text-white">
+                SpeedCopy
+              </h1>
+              <button 
+                onClick={() => setShowMobileSidebar(false)}
+                className="p-1 hover:bg-white/10 rounded-lg transition"
+              >
+                <X size={20} className="text-white" />
+              </button>
+            </div>
+            <p className="mt-2 pl-1 text-[11px] font-semibold uppercase tracking-[0.34em] text-[#a99f93]">
+              Vendor portal
+            </p>
+          </div>
+
+          <div className="mx-5 h-px bg-violet-200/30" />
+
+          <nav className="flex-1 overflow-y-auto px-4 py-6">
+            <div className="space-y-5">
+              {filteredNavGroups.map((group) => (
+                <div key={group.label}>
+                  <p className="px-4 pb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-white/35">
+                    {group.label}
+                  </p>
+                  <div className="space-y-1">
+                    {group.items.map(({ to, icon: Icon, label }) => (
+                      <NavLink
+                        key={to}
+                        to={to}
+                        onClick={() => setShowMobileSidebar(false)}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
+                            isActive ? "admin-nav-active" : "admin-nav-idle hover:bg-white/5 hover:text-white"
+                          }`
+                        }
+                      >
+                        <Icon size={15} />
+                        <span>{label}</span>
+                      </NavLink>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </nav>
+
+          <div className="px-4 pb-5">
+            <button 
+              onClick={() => {
+                setShowMobileSidebar(false);
+                handleLogout();
+              }}
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white/72 hover:bg-white/5 hover:text-white transition-all"
+            >
+              <LogOut size={15} />
+              Logout
+            </button>
+          </div>
+        </aside>
+
         <div className="admin-content-shell flex min-w-0 flex-1 flex-col overflow-hidden">
           <header className="admin-topbar flex items-center justify-between px-4 py-4 sm:px-6 sm:py-5">
-            <div>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setShowMobileSidebar(!showMobileSidebar)}
+                className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition"
+                title="Toggle menu"
+              >
+                <Menu size={20} className="text-slate-900" />
+              </button>
               <h1 className="text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
                 {page.title}
               </h1>
             </div>
 
-            <div className="flex items-center gap-3">
-              <form onSubmit={handleSearch} className="relative">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <form onSubmit={handleSearch} className="relative hidden sm:block">
                 <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input 
-                  className="w-64 rounded-full border border-gray-200 py-2 pl-10 pr-4 text-sm outline-none focus:border-gray-400" 
+                  className="w-48 sm:w-64 rounded-full border border-gray-200 py-2 pl-10 pr-4 text-sm outline-none focus:border-gray-400" 
                   placeholder="Search orders..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
