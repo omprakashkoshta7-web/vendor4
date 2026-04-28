@@ -161,6 +161,7 @@ export default function StoreDetailPage() {
           <h1 className="text-xl font-black text-gray-900">Store Details</h1>
           <p className="text-sm text-gray-500 mt-0.5">Manage store information</p>
         </div>
+        <button onClick={() => navigate("/stores")}
           className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-gray-900 transition">
           <ArrowLeft size={16} /> Back
         </button>

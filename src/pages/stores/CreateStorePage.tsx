@@ -89,6 +89,7 @@ export default function CreateStorePage() {
           <h1 className="text-xl font-black text-gray-900">Create Store</h1>
           <p className="text-sm text-gray-500 mt-0.5">Add a new store location</p>
         </div>
+        <button onClick={() => navigate("/stores")}
           className="flex items-center gap-2 text-sm font-semibold text-gray-500 hover:text-gray-900 transition">
           <ArrowLeft size={16} /> Back
         </button>
