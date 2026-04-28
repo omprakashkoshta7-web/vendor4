@@ -231,9 +231,13 @@ export default function VendorLayout() {
           <div className="px-4 pb-5">
             <button 
               onClick={handleLogout} 
-              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white/72 hover:bg-white/5 hover:text-white transition-all"
+              className="flex w-full items-center justify-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-white transition-all"
+              style={{
+                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
+              }}
             >
-              <LogOut size={15} />
+              <LogOut size={16} />
               Logout
             </button>
           </div>
@@ -305,9 +309,13 @@ export default function VendorLayout() {
                 setShowMobileSidebar(false);
                 handleLogout();
               }}
-              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white/72 hover:bg-white/5 hover:text-white transition-all"
+              className="flex w-full items-center justify-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-white transition-all"
+              style={{
+                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
+              }}
             >
-              <LogOut size={15} />
+              <LogOut size={16} />
               Logout
             </button>
           </div>
