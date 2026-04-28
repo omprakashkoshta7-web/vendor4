@@ -245,7 +245,7 @@ export default function OrgProfilePage() {
         <div className="rounded-xl border border-gray-200 p-4 bg-white">
           <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Priority Score</p>
           <div className="flex items-center gap-2">
-            <Star size={16} style={{ color: "#f59e0b" }} />
+            <Star size={16} className="text-yellow-500" />
             <p className="text-sm font-bold text-gray-900">{profile?.priority ?? 0} / 10</p>
           </div>
         </div>

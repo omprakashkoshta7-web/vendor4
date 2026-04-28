@@ -45,9 +45,9 @@ export default function ClosurePage() {
         earnings: d.earnings || 0,
         count: d.count || 0,
         avgOrderValue: d.count > 0 ? Math.round(d.earnings / d.count) : 0,
-        chartData: (d as any).chartData || [],
-        storeBreakdown: (d as any).storeBreakdown || [],
-        jobs: (d as any).jobs || [],
+        chartData: [],
+        storeBreakdown: [],
+        jobs: [],
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load closure");
