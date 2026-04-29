@@ -224,10 +224,64 @@ export async function assignStaffStores(id: string, assignedStoreIds: string[]) 
 // ============================================
 
 export async function getVendorOrders(status?: string) {
-  const query = status && status !== "all" ? `?status=${encodeURIComponent(status)}` : "";
-  return apiRequest<ApiEnvelope<PaginatedVendorOrders>>(
-    `${API_ENDPOINTS.vendor.ordersAssigned}${query}`
-  );
+  // If a specific status is requested, fetch only that
+  if (status && status !== "all") {
+    return apiRequest<ApiEnvelope<PaginatedVendorOrders>>(
+      `${API_ENDPOINTS.vendor.ordersAssigned}?status=${encodeURIComponent(status)}`
+    );
+  }
+
+  // Fetch active + delivered + cancelled in parallel and merge
+  const activeStatuses = [
+    "assigned_vendor",
+    "vendor_accepted",
+    "in_production",
+    "qc_pending",
+    "ready_for_pickup",
+    "out_for_delivery",
+  ];
+  const terminalStatuses = ["delivered", "cancelled"];
+
+  const [activeRes, ...terminalRes] = await Promise.all([
+    // Active orders (no filter = all active)
+    apiRequest<ApiEnvelope<PaginatedVendorOrders>>(API_ENDPOINTS.vendor.ordersAssigned),
+    // Terminal status orders
+    ...terminalStatuses.map(s =>
+      apiRequest<ApiEnvelope<PaginatedVendorOrders>>(
+        `${API_ENDPOINTS.vendor.ordersAssigned}?status=${s}`
+      ).catch(() => ({ data: { orders: [], meta: {} } } as ApiEnvelope<PaginatedVendorOrders>))
+    ),
+  ]);
+
+  // Merge all orders, deduplicate by _id
+  const allOrders = [
+    ...(activeRes.data.orders || []),
+    ...terminalRes.flatMap(r => r.data.orders || []),
+  ];
+  const seen = new Set<string>();
+  const uniqueOrders = allOrders.filter(o => {
+    if (seen.has(o._id)) return false;
+    seen.add(o._id);
+    return true;
+  });
+
+  // Sort: active first (by createdAt desc), then terminal
+  const activeSet = new Set(activeStatuses);
+  uniqueOrders.sort((a, b) => {
+    const aActive = activeSet.has(a.status) ? 0 : 1;
+    const bActive = activeSet.has(b.status) ? 0 : 1;
+    if (aActive !== bActive) return aActive - bActive;
+    return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+  });
+
+  return {
+    ...activeRes,
+    data: {
+      ...activeRes.data,
+      orders: uniqueOrders,
+      meta: { ...activeRes.data.meta, total: uniqueOrders.length },
+    },
+  };
 }
 
 export async function getVendorOrder(id: string) {

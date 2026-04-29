@@ -65,11 +65,18 @@ export default function JobQueuePage() {
 
   useEffect(() => { void loadOrders(); }, []);
 
+  // Auto-refresh every 30s — picks up status changes (delivered, cancelled, etc.)
+  useEffect(() => {
+    const interval = window.setInterval(() => { void loadOrders(); }, 30000);
+    return () => window.clearInterval(interval);
+  }, []);
+
   const stats = useMemo(() => ({
     pending:    orders.filter(o => o.status === "assigned_vendor").length,
     accepted:   orders.filter(o => o.status === "vendor_accepted").length,
     production: orders.filter(o => ["in_production", "qc_pending"].includes(o.status)).length,
-    ready:      orders.filter(o => o.status === "ready_for_pickup").length,
+    ready:      orders.filter(o => ["ready_for_pickup", "out_for_delivery"].includes(o.status)).length,
+    delivered:  orders.filter(o => o.status === "delivered").length,
     total:      orders.length,
   }), [orders]);
 
@@ -145,11 +152,12 @@ export default function JobQueuePage() {
       )}
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <VendorMetricCard index={0} label="Pending" value={String(stats.pending)} accent={COLORS.warning} accentBg={COLORS.warningBg} icon={Clock} />
         <VendorMetricCard index={1} label="Accepted" value={String(stats.accepted)} accent={COLORS.info} accentBg={COLORS.infoBg} icon={CheckCircle} />
         <VendorMetricCard index={2} label="In Production" value={String(stats.production)} accent="#8b5cf6" accentBg="#f5f3ff" icon={Zap} />
-        <VendorMetricCard index={3} label="Ready" value={String(stats.ready)} accent={COLORS.success} accentBg={COLORS.successBg} icon={Package} />
+        <VendorMetricCard index={3} label="Ready / Out" value={String(stats.ready)} accent={COLORS.success} accentBg={COLORS.successBg} icon={Package} />
+        <VendorMetricCard index={4} label="Delivered" value={String(stats.delivered)} accent={COLORS.primary} accentBg={`${COLORS.primary}18`} icon={CheckCircle} />
       </div>
 
       {/* Search + Filter */}
