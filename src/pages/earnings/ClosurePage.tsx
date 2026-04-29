@@ -1,13 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Download, RefreshCw, AlertTriangle, Briefcase, CheckCircle, DollarSign, TrendingUp } from "lucide-react";
 import LoadingState from "../../components/ui/LoadingState";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { COLORS } from "../../utils/colors";
 import {
   getVendorClosureDaily,
   getVendorClosureWeekly,
   getVendorClosureMonthly,
-  getVendorStores,
 } from "../../services/vendor.service";
 import VendorMetricCard from "../../components/ui/VendorMetricCard";
 
@@ -17,13 +15,8 @@ export default function ClosurePage() {
   const [period, setPeriod] = useState<Period>("daily");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
   const [closure, setClosure] = useState<any>(null);
-  const [stores, setStores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    getVendorStores().then(r => setStores(r.data || [])).catch(() => {});
-  }, []);
 
   // API 4: GET /finance/closure/daily
   // API 5: GET /finance/closure/weekly
@@ -38,16 +31,11 @@ export default function ClosurePage() {
       else res = await getVendorClosureDaily(selectedDate);
 
       const d = res.data || { period, earnings: 0, count: 0 };
-      // Backend returns: { period, earnings, count }
-      // Normalize to display format
       setClosure({
         period: d.period || period,
         earnings: d.earnings || 0,
         count: d.count || 0,
         avgOrderValue: d.count > 0 ? Math.round(d.earnings / d.count) : 0,
-        chartData: [],
-        storeBreakdown: [],
-        jobs: [],
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load closure");
@@ -57,9 +45,6 @@ export default function ClosurePage() {
   };
 
   useEffect(() => { void loadClosure(); }, [period, selectedDate]);
-
-  const storeNameMap = useMemo(() =>
-    new Map(stores.map(s => [s._id, s.name])), [stores]);
 
   const exportReport = () => {
     if (!closure) return;
@@ -146,66 +131,6 @@ export default function ClosurePage() {
                 <p className="text-xs text-gray-500 mb-1">Avg per Order</p>
                 <p className="text-2xl font-black text-gray-900">₹{closure.avgOrderValue.toLocaleString()}</p>
               </div>
-            </div>
-          </div>
-
-          {/* Chart (if chartData available) */}
-          {closure.chartData && closure.chartData.length > 0 && (
-            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-              <h3 className="text-base font-bold text-gray-900 mb-4">Earnings Trend</h3>
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={closure.chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="period" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6b7280" }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#6b7280" }} tickFormatter={v => `₹${(v/1000).toFixed(0)}K`} />
-                  <Tooltip formatter={(v: any) => [`₹${Number(v).toLocaleString()}`, "Earnings"]} />
-                  <Bar dataKey="earnings" fill={COLORS.primary} radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-
-          {/* Store Breakdown + Jobs */}
-          <div className="grid gap-5 lg:grid-cols-2">
-            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-              <h3 className="text-base font-bold text-gray-900 mb-4">Store Breakdown</h3>
-              {closure.storeBreakdown.length > 0 ? (
-                <div className="space-y-3">
-                  {closure.storeBreakdown.map((item: any) => (
-                    <div key={item.storeId} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200">
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">{storeNameMap.get(item.storeId) || item.storeId}</p>
-                        <p className="text-xs text-gray-500">{item.jobs} jobs • {item.percentage}%</p>
-                      </div>
-                      <p className="text-sm font-black text-gray-900">₹{item.earnings.toLocaleString()}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-400 text-center py-6">No store breakdown available</p>
-              )}
-            </div>
-
-            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-              <h3 className="text-base font-bold text-gray-900 mb-4">Closed Jobs</h3>
-              {closure.jobs.length > 0 ? (
-                <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {closure.jobs.map((job: any) => (
-                    <div key={job.id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200">
-                      <div>
-                        <p className="text-xs font-bold text-gray-900 font-mono">{job.id}</p>
-                        <p className="text-xs text-gray-500">{storeNameMap.get(job.storeId) || job.storeId}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-bold text-gray-900">₹{job.amount.toLocaleString()}</p>
-                        <p className="text-xs text-gray-400">{job.status}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-400 text-center py-6">No closed jobs in this period</p>
-              )}
             </div>
           </div>
         </>

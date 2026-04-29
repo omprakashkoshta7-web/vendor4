@@ -15,48 +15,29 @@ const VendorDashboardPage = () => {
   });
 
   useEffect(() => {
-    // DEBUG: Log current user session
-    const session = JSON.parse(localStorage.getItem('vendor_session') || '{}');
-    console.log('🔍 VENDOR DEBUG - Current Session:', session);
-    console.log('🔍 VENDOR DEBUG - User ID:', session.userId);
-    console.log('🔍 VENDOR DEBUG - Vendor Org ID:', session.vendorOrgId);
-    
     async function loadDashboardData() {
       try {
         setLoading(true);
         const [financeResponse, staffResponse, scoreResponse] = await Promise.all([
-          getVendorFinanceSummary().catch((err) => {
-            console.log('💰 Finance API Error:', err);
-            return { data: { balance: 0, pendingSettlement: 0, availableForWithdrawal: 0 } };
-          }),
-          getVendorStaff().catch((err) => {
-            console.log('👥 Staff API Error:', err);
-            return { data: [] };
-          }),
-          getVendorScore().catch((err) => {
-            console.log('🎯 Score API Error:', err);
-            return { data: { acceptanceRate: 0, completionRate: 0, overallScore: 0 } };
-          }),
+          getVendorFinanceSummary().catch(() => ({ data: { balance: 0, pendingSettlement: 0, availableForWithdrawal: 0 } })),
+          getVendorStaff().catch(() => ({ data: [] })),
+          getVendorScore().catch(() => ({ data: { acceptanceRate: 0, completionRate: 0, overallScore: 0 } })),
         ]);
 
-        console.log('💰 Finance Response:', financeResponse);
-        console.log('👥 Staff Response:', staffResponse);
-        console.log('🎯 Score Response:', scoreResponse);
-
-        const activeStaffCount = Array.isArray(staffResponse.data) 
-          ? staffResponse.data.filter((s: { isActive: boolean }) => s.isActive).length 
+        const activeStaffCount = Array.isArray(staffResponse.data)
+          ? staffResponse.data.filter((s: { isActive: boolean }) => s.isActive).length
           : 0;
 
         const financeData = financeResponse.data || { balance: 0, pendingSettlement: 0, availableForWithdrawal: 0 };
-        
+
         setMetrics({
-          jobsClosed: 0, // Not available in current API
+          jobsClosed: 0,
           netPayout: financeData.balance || 0,
           slaScore: scoreResponse.data?.completionRate || 0,
           activeStaff: activeStaffCount,
         });
-      } catch (err) {
-        console.error("Failed to load dashboard data:", err);
+      } catch {
+        // silently fail — metrics stay at 0
       } finally {
         setLoading(false);
       }
