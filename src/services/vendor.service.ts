@@ -249,7 +249,7 @@ export async function getVendorOrders(status?: string) {
     ...terminalStatuses.map(s =>
       apiRequest<ApiEnvelope<PaginatedVendorOrders>>(
         `${API_ENDPOINTS.vendor.ordersAssigned}?status=${s}`
-      ).catch(() => ({ data: { orders: [], meta: {} } } as ApiEnvelope<PaginatedVendorOrders>))
+      ).catch(() => ({ success: true, message: "", data: { orders: [], meta: {} } } as unknown as ApiEnvelope<PaginatedVendorOrders>))
     ),
   ]);
 
