@@ -33,7 +33,7 @@ html {
 
 body {
   margin: 0;
-  font-family: "Aptos", "Segoe UI", "Trebuchet MS", sans-serif;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
   color: var(--admin-text);
   background:
     radial-gradient(circle at top left, rgba(255, 255, 255, 0.95), transparent 34%),

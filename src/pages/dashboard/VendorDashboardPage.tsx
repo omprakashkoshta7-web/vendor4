@@ -113,20 +113,35 @@ const VendorDashboardPage = () => {
         />
       </section>
 
-      {/* Info Message */}
-      <section className="vendor-surface vendor-glow overflow-hidden rounded-[30px] border border-white/70 p-8 text-center">
-        <div className="mx-auto max-w-md">
-          <div className="mb-4 flex justify-center">
-            <div className="rounded-full bg-violet-100 p-4">
-              <Store size={32} className="text-violet-600" />
+      {/* No Data State */}
+      {metrics.jobsClosed === 0 && metrics.netPayout === 0 && metrics.activeStaff === 0 && (
+        <section className="vendor-surface vendor-glow overflow-hidden rounded-[30px] border border-white/70 px-8 py-12 text-center">
+          <div className="mx-auto max-w-sm">
+            <div className="mb-5 flex justify-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
+                <Store size={28} className="text-gray-400" />
+              </div>
+            </div>
+            <h3 className="text-lg font-bold tracking-tight text-gray-900" style={{ fontFamily: "'Inter', sans-serif" }}>
+              No dashboard data found
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-gray-500" style={{ fontFamily: "'Inter', sans-serif" }}>
+              Your jobs, payouts, and staff activity will appear here once operations begin. Use the sidebar to set up your stores and staff.
+            </p>
+            <div className="mt-6 flex justify-center gap-3">
+              <a href="/stores"
+                className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+                style={{ backgroundColor: COLORS.primary }}>
+                <Store size={14} /> Set up Stores
+              </a>
+              <a href="/staff"
+                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-gray-400">
+                <Users size={14} /> Add Staff
+              </a>
             </div>
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Dashboard Overview</h3>
-          <p className="text-sm text-gray-600">
-            View your key metrics above. Navigate to specific sections for detailed analytics and management.
-          </p>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 };
