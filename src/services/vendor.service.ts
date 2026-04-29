@@ -333,7 +333,7 @@ export async function uploadQcImagesMultipart(id: string, files: File[], note?: 
   const formData = new FormData();
   
   // Add files
-  files.forEach((file, index) => {
+  files.forEach((file) => {
     formData.append(`images`, file);
   });
   
