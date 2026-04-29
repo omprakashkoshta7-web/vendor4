@@ -189,183 +189,198 @@ export default function SupportPage() {
       </div>
 
       {loading ? <LoadingState message="Loading support tickets" /> : (
-        <div className="grid gap-5 lg:grid-cols-2" style={{ alignItems: "stretch" }}>
-
-          {/* Ticket List — API 1 */}
-          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden flex flex-col" style={{ height: "600px" }}>
-            {/* Header */}
-            <div className="p-4 border-b border-gray-100 flex-shrink-0">
-              <h3 className="text-base font-bold text-gray-900">Tickets</h3>
-            </div>
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto p-3">
-              {filteredTickets.length > 0 ? (
-                <div className="space-y-2">
-                  {filteredTickets.map(ticket => {
+        <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50">
+                  <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Subject</th>
+                  <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Category</th>
+                  <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Priority</th>
+                  <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Status</th>
+                  <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Replies</th>
+                  <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Created</th>
+                  <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {filteredTickets.length > 0 ? (
+                  filteredTickets.map(ticket => {
                     const sc = STATUS_STYLE[ticket.status] || STATUS_STYLE.open;
                     const pc = PRIORITY_STYLE[ticket.priority] || PRIORITY_STYLE.medium;
-                    const isActive = activeTicket?._id === ticket._id;
                     return (
-                      <button key={ticket._id} onClick={() => void openTicket(ticket)}
-                        className="w-full rounded-xl border p-4 text-left transition hover:shadow-md"
-                        style={{
-                          borderColor: isActive ? COLORS.primary : "#f1f5f9",
-                          backgroundColor: isActive ? `${COLORS.primary}08` : "white",
-                          boxShadow: isActive ? `0 0 0 2px ${COLORS.primary}30` : undefined,
-                        }}>
-                        <div className="flex items-start justify-between gap-3 mb-2">
-                          <p className="text-sm font-bold text-gray-900 line-clamp-1">{ticket.subject}</p>
-                          <span className="rounded-full border px-2 py-0.5 text-xs font-bold uppercase flex-shrink-0"
-                            style={{ backgroundColor: sc.bg, color: sc.color, borderColor: sc.border }}>
-                            {ticket.status.replace("_", " ")}
+                      <tr key={ticket._id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-5 py-4">
+                          <p className="font-semibold text-gray-900 line-clamp-1 max-w-[220px]">{ticket.subject}</p>
+                          <p className="text-xs text-gray-400 line-clamp-1 mt-0.5 max-w-[220px]">{ticket.description}</p>
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className="text-xs px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 capitalize font-medium">
+                            {ticket.category.replace(/_/g, " ")}
                           </span>
-                        </div>
-                        <p className="text-xs text-gray-500 line-clamp-2 mb-2">{ticket.description}</p>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs px-2 py-0.5 rounded-full font-semibold capitalize"
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className="text-xs px-2.5 py-1 rounded-full font-semibold capitalize"
                             style={{ backgroundColor: pc.bg, color: pc.color }}>
                             {ticket.priority}
                           </span>
-                          <span className="text-xs text-gray-400 capitalize">{ticket.category.replace("_", " ")}</span>
-                          <span className="text-xs text-gray-400 ml-auto">{ticket.replies.length} replies</span>
-                          <ChevronRight size={12} className="text-gray-400" />
-                        </div>
-                      </button>
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className="rounded-full border px-2.5 py-1 text-xs font-bold uppercase"
+                            style={{ backgroundColor: sc.bg, color: sc.color, borderColor: sc.border }}>
+                            {ticket.status.replace(/_/g, " ")}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-gray-500 text-xs font-medium">
+                          {ticket.replies.length}
+                        </td>
+                        <td className="px-5 py-4 text-gray-400 text-xs whitespace-nowrap">
+                          {ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString() : "—"}
+                        </td>
+                        <td className="px-5 py-4">
+                          <button
+                            onClick={() => void openTicket(ticket)}
+                            className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-lg border transition hover:shadow-sm"
+                            style={{ color: COLORS.primary, borderColor: `${COLORS.primary}40`, backgroundColor: `${COLORS.primary}08` }}>
+                            View <ChevronRight size={12} />
+                          </button>
+                        </td>
+                      </tr>
                     );
-                  })}
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="px-5 py-16 text-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gray-100">
+                          <MessageSquare size={24} className="text-gray-400" />
+                        </div>
+                        <p className="text-sm font-semibold text-gray-600">
+                          {tickets.length === 0 ? "No tickets yet" : "No tickets match your filter"}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {tickets.length === 0 ? "Raise your first support ticket using the button above" : "Try changing the filter or search term"}
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Ticket Detail Drawer — API 4 + API 5 */}
+      {activeTicket && (
+        <div className="fixed inset-0 bg-black/40 z-40 flex justify-end" onClick={() => setActiveTicket(null)}>
+          <div className="w-full max-w-lg bg-white h-full shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
+            {/* Drawer Header */}
+            <div className="p-5 border-b border-gray-100 flex items-start justify-between gap-3 flex-shrink-0">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-bold text-gray-900 line-clamp-1">{activeTicket.subject}</h3>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <span className="rounded-full border px-2.5 py-0.5 text-xs font-bold uppercase"
+                    style={{
+                      backgroundColor: (STATUS_STYLE[activeTicket.status] || STATUS_STYLE.open).bg,
+                      color: (STATUS_STYLE[activeTicket.status] || STATUS_STYLE.open).color,
+                      borderColor: (STATUS_STYLE[activeTicket.status] || STATUS_STYLE.open).border,
+                    }}>
+                    {activeTicket.status.replace(/_/g, " ")}
+                  </span>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold capitalize"
+                    style={{ backgroundColor: (PRIORITY_STYLE[activeTicket.priority] || PRIORITY_STYLE.medium).bg, color: (PRIORITY_STYLE[activeTicket.priority] || PRIORITY_STYLE.medium).color }}>
+                    {activeTicket.priority}
+                  </span>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-600 capitalize">
+                    {activeTicket.category.replace(/_/g, " ")}
+                  </span>
                 </div>
+              </div>
+              <button onClick={() => setActiveTicket(null)} className="p-1.5 rounded-lg hover:bg-gray-100 transition flex-shrink-0">
+                <X size={16} className="text-gray-500" />
+              </button>
+            </div>
+
+            {/* Description */}
+            <div className="px-5 py-3 border-b border-gray-100 flex-shrink-0">
+              <p className="text-xs text-gray-500">{activeTicket.description}</p>
+              <p className="text-xs text-gray-400 mt-1">
+                Created: {activeTicket.createdAt ? new Date(activeTicket.createdAt).toLocaleString() : "—"}
+              </p>
+            </div>
+
+            {/* Replies */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-3">
+              {detailLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <RefreshCw size={20} className="animate-spin text-gray-400" />
+                </div>
+              ) : activeTicket.replies.length > 0 ? (
+                activeTicket.replies.map((reply, i) => {
+                  const isVendor = reply.authorRole === "vendor";
+                  return (
+                    <div key={i} className={`flex gap-3 ${isVendor ? "flex-row-reverse" : ""}`}>
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: isVendor ? `${COLORS.primary}18` : COLORS.successBg }}>
+                        {isVendor
+                          ? <User size={14} style={{ color: COLORS.primary }} />
+                          : <Headphones size={14} style={{ color: COLORS.success }} />
+                        }
+                      </div>
+                      <div className={`flex-1 max-w-[80%] ${isVendor ? "items-end" : "items-start"} flex flex-col`}>
+                        <div className="px-4 py-3"
+                          style={{
+                            backgroundColor: isVendor ? `${COLORS.primary}12` : COLORS.successBg,
+                            borderRadius: isVendor ? "18px 4px 18px 18px" : "4px 18px 18px 18px",
+                          }}>
+                          <p className="text-sm text-gray-800">{reply.message}</p>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1 px-1">
+                          {isVendor ? "You" : "Support"} • {reply.createdAt ? new Date(reply.createdAt).toLocaleString() : "—"}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-center p-8">
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 bg-gray-100">
-                    <MessageSquare size={24} className="text-gray-400" />
-                  </div>
-                  <p className="text-sm font-semibold text-gray-600">
-                    {tickets.length === 0 ? "No tickets yet" : "No tickets match your filter"}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    {tickets.length === 0 ? "Raise your first support ticket" : "Try a different filter"}
-                  </p>
+                <div className="text-center py-8">
+                  <MessageSquare size={28} className="mx-auto text-gray-300 mb-2" />
+                  <p className="text-sm text-gray-400">No replies yet. Send a message to support.</p>
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Ticket Detail — API 4 + API 5 */}
-          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden flex flex-col" style={{ height: "600px" }}>
-            {/* Header */}
-            <div className="p-4 border-b border-gray-100 flex-shrink-0">
-              <h3 className="text-base font-bold text-gray-900">
-                {activeTicket ? activeTicket.subject : "Conversation"}
-              </h3>
-            </div>
-            {activeTicket ? (
-              <>
-                {/* Ticket Meta */}
-                <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0">
-                  <div className="flex flex-wrap gap-2 items-center">
-                    <span className="rounded-full border px-2.5 py-1 text-xs font-bold uppercase"
-                      style={{
-                        backgroundColor: (STATUS_STYLE[activeTicket.status] || STATUS_STYLE.open).bg,
-                        color: (STATUS_STYLE[activeTicket.status] || STATUS_STYLE.open).color,
-                        borderColor: (STATUS_STYLE[activeTicket.status] || STATUS_STYLE.open).border,
-                      }}>
-                      {activeTicket.status.replace("_", " ")}
-                    </span>
-                    <span className="text-xs px-2 py-0.5 rounded-full font-semibold capitalize"
-                      style={{ backgroundColor: (PRIORITY_STYLE[activeTicket.priority] || PRIORITY_STYLE.medium).bg, color: (PRIORITY_STYLE[activeTicket.priority] || PRIORITY_STYLE.medium).color }}>
-                      {activeTicket.priority}
-                    </span>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 capitalize">
-                      {activeTicket.category.replace("_", " ")}
-                    </span>
-                    <span className="text-xs text-gray-400 ml-auto">
-                      {activeTicket.createdAt ? new Date(activeTicket.createdAt).toLocaleDateString() : "—"}
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-2 line-clamp-2">{activeTicket.description}</p>
+            {/* Reply Input */}
+            {activeTicket.status !== "resolved" && activeTicket.status !== "closed" ? (
+              <div className="p-4 border-t border-gray-100 flex-shrink-0">
+                <div className="flex gap-2">
+                  <input value={newMessage} onChange={e => setNewMessage(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void handleReply(); } }}
+                    placeholder="Type your reply..."
+                    className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:border-gray-900 transition" />
+                  <button onClick={() => void handleReply()}
+                    disabled={!newMessage.trim() || sending}
+                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition disabled:opacity-50"
+                    style={{ backgroundColor: COLORS.primary }}>
+                    <Send size={14} />
+                    {sending ? "..." : "Send"}
+                  </button>
                 </div>
-
-                {/* Replies */}
-                <div className="flex-1 overflow-y-auto p-5 space-y-3">
-                  {detailLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <RefreshCw size={20} className="animate-spin text-gray-400" />
-                    </div>
-                  ) : activeTicket.replies.length > 0 ? (
-                    activeTicket.replies.map((reply, i) => {
-                      const isVendor = reply.authorRole === "vendor";
-                      return (
-                        <div key={i} className={`flex gap-3 ${isVendor ? "flex-row-reverse" : ""}`}>
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                            style={{ backgroundColor: isVendor ? `${COLORS.primary}18` : COLORS.successBg }}>
-                            {isVendor
-                              ? <User size={14} style={{ color: COLORS.primary }} />
-                              : <Headphones size={14} style={{ color: COLORS.success }} />
-                            }
-                          </div>
-                          <div className={`flex-1 max-w-[80%] ${isVendor ? "items-end" : "items-start"} flex flex-col`}>
-                            <div className="rounded-2xl px-4 py-3"
-                              style={{
-                                backgroundColor: isVendor ? `${COLORS.primary}12` : COLORS.successBg,
-                                borderRadius: isVendor ? "18px 4px 18px 18px" : "4px 18px 18px 18px",
-                              }}>
-                              <p className="text-sm text-gray-800">{reply.message}</p>
-                            </div>
-                            <p className="text-xs text-gray-400 mt-1 px-1">
-                              {isVendor ? "You" : "Support"} • {reply.createdAt ? new Date(reply.createdAt).toLocaleString() : "—"}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="text-center py-8">
-                      <MessageSquare size={28} className="mx-auto text-gray-300 mb-2" />
-                      <p className="text-sm text-gray-400">No replies yet. Send a message to support.</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Reply Input — API 5 */}
-                {activeTicket.status !== "resolved" && activeTicket.status !== "closed" && (
-                  <div className="p-4 border-t border-gray-100">
-                    <div className="flex gap-2">
-                      <input value={newMessage} onChange={e => setNewMessage(e.target.value)}
-                        onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void handleReply(); } }}
-                        placeholder="Type your reply..."
-                        className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:border-gray-900 transition" />
-                      <button onClick={() => void handleReply()}
-                        disabled={!newMessage.trim() || sending}
-                        className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition disabled:opacity-50"
-                        style={{ backgroundColor: COLORS.primary }}>
-                        <Send size={14} />
-                        {sending ? "..." : "Send"}
-                      </button>
-                    </div>
-                  </div>
-                )}
-                {(activeTicket.status === "resolved" || activeTicket.status === "closed") && (
-                  <div className="p-4 border-t border-gray-100">
-                    <div className="flex items-center gap-2 p-3 rounded-xl"
-                      style={{ backgroundColor: COLORS.successBg }}>
-                      <CheckCircle size={14} style={{ color: COLORS.success }} />
-                      <p className="text-xs font-semibold" style={{ color: COLORS.success }}>
-                        This ticket has been {activeTicket.status}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </>
+              </div>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-                  style={{ backgroundColor: `${COLORS.primary}18` }}>
-                  <MessageSquare size={24} style={{ color: COLORS.primary }} />
+              <div className="p-4 border-t border-gray-100 flex-shrink-0">
+                <div className="flex items-center gap-2 p-3 rounded-xl"
+                  style={{ backgroundColor: COLORS.successBg }}>
+                  <CheckCircle size={14} style={{ color: COLORS.success }} />
+                  <p className="text-xs font-semibold" style={{ color: COLORS.success }}>
+                    This ticket has been {activeTicket.status}
+                  </p>
                 </div>
-                <p className="text-sm font-semibold text-gray-600">Select a ticket to view conversation</p>
-                <p className="text-xs text-gray-400 mt-1">Or raise a new ticket for support</p>
               </div>
             )}
+          </div>
         </div>
       )}
 
