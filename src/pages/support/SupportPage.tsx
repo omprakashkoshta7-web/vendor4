@@ -16,8 +16,7 @@ import LoadingState from "../../components/ui/LoadingState";
 import type { SupportTicket } from "../../types/vendor";
 import VendorMetricCard from "../../components/ui/VendorMetricCard";
 
-const CATEGORIES = ["order_issue", "payment_issue", "delivery_issue", "product_issue", "account_issue", "other"] as const;
-const PRIORITIES = ["low", "medium", "high", "urgent"] as const;
+const CATEGORIES = ["order", "payment", "technical", "other"] as const;
 
 const STATUS_STYLE: Record<string, { color: string; bg: string; border: string }> = {
   open:        { color: COLORS.info,    bg: COLORS.infoBg,    border: COLORS.infoBorder },
@@ -49,7 +48,6 @@ export default function SupportPage() {
   const [form, setForm] = useState({
     subject: "",
     category: "other" as typeof CATEGORIES[number],
-    priority: "medium" as typeof PRIORITIES[number],
     description: "",
     orderId: "",
   });
@@ -64,7 +62,7 @@ export default function SupportPage() {
         getSupportTickets(),
         getSupportSummary(),
       ]);
-      setTickets(ticketsRes.data.tickets || []);
+      setTickets(Array.isArray(ticketsRes.data) ? ticketsRes.data : []);
       setCounts(summaryRes.data.status_counts || {});
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load support tickets");
@@ -106,7 +104,7 @@ export default function SupportPage() {
       setTickets(cur => [res.data, ...cur]);
       setCounts(cur => ({ ...cur, open: (cur.open || 0) + 1 }));
       setShowNew(false);
-      setForm({ subject: "", category: "other", priority: "medium", description: "", orderId: "" });
+      setForm({ subject: "", category: "other", description: "", orderId: "" });
       setActiveTicket(res.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create ticket");
@@ -404,29 +402,19 @@ export default function SupportPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Category</label>
-                  <select value={form.category} onChange={e => setForm(c => ({ ...c, category: e.target.value as any }))}
+                  <select value={form.category} onChange={e => setForm(c => ({ ...c, category: e.target.value as typeof CATEGORIES[number] }))}
                     className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:border-gray-900 transition appearance-none">
                     {CATEGORIES.map(cat => (
-                      <option key={cat} value={cat}>{cat.replace("_", " ")}</option>
+                      <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Priority</label>
-                  <select value={form.priority} onChange={e => setForm(c => ({ ...c, priority: e.target.value as any }))}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:border-gray-900 transition appearance-none">
-                    {PRIORITIES.map(p => (
-                      <option key={p} value={p}>{p}</option>
-                    ))}
-                  </select>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Order ID (optional)</label>
+                  <input value={form.orderId} onChange={e => setForm(c => ({ ...c, orderId: e.target.value }))}
+                    placeholder="Related order ID"
+                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:border-gray-900 transition font-mono" />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Order ID (optional)</label>
-                <input value={form.orderId} onChange={e => setForm(c => ({ ...c, orderId: e.target.value }))}
-                  placeholder="Related order ID if applicable"
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:border-gray-900 transition font-mono" />
               </div>
 
               <div>

@@ -4,12 +4,12 @@ import { AlertCircle, Lock, Mail, Shield } from "lucide-react";
 import { COLORS } from "../../utils/colors";
 import { setVendorSession } from "../../services/session";
 import { loginWithFirebase } from "../../services/firebase-auth";
-import { OWNER_PERMISSIONS, getVendorProfile } from "../../services/vendor.service";
+import { OWNER_PERMISSIONS, getVendorSession as fetchVendorSession } from "../../services/vendor.service";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("vendor@speedcopy.com");
-  const [password, setPassword] = useState("vendor123");
+  const [password, setPassword] = useState("Vendor@123456");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -22,29 +22,35 @@ export default function LoginPage() {
       const authResponse = await loginWithFirebase(email, password);
       const { user, token } = authResponse;
 
-      // Backend returns token, user data is optional
-      if (!token) {
-        throw new Error("No authentication token received");
-      }
+      if (!token) throw new Error("No authentication token received");
 
-      const profileResponse = await getVendorProfile().catch(() => null);
-      const profile = profileResponse?.data;
+      // Fetch real session data from backend — gets vendorOrgId, portalRole, permissions, storeScope
+      const sessionRes = await fetchVendorSession().catch(() => null);
+      const sessionData = sessionRes?.data as any;
+
+      const portalRole = sessionData?.portalRole || user?.role || "Owner";
+      const permissions: string[] = sessionData?.permissions?.length
+        ? sessionData.permissions
+        : [...OWNER_PERMISSIONS];
+      const storeScope: string[] = sessionData?.storeScope || [];
+      const vendorOrgId: string =
+        sessionData?.vendorOrgId || user?._id || "vendor";
 
       setVendorSession({
-        userId: user?._id || "vendor",
-        email: user?.email || email,
-        role: "Owner",
-        vendorOrgId: profile?._id || profile?.userId || user?._id || "vendor",
-        storeScope: [],
-        permissions: [...OWNER_PERMISSIONS],
+        userId: sessionData?._id || user?._id || "vendor",
+        email: sessionData?.email || user?.email || email,
+        role: (portalRole === "Owner" || portalRole === "Manager" || portalRole === "Staff")
+          ? portalRole
+          : "Owner",
+        vendorOrgId,
+        storeScope,
+        permissions,
         token,
       });
 
-      navigate("/orders", { replace: true });
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Login failed";
-      
-      // Provide user-friendly error messages
       let displayError = message;
       if (message.includes("Too many requests")) {
         displayError = "Too many login attempts. Please wait a moment and try again.";
@@ -55,7 +61,6 @@ export default function LoginPage() {
       } else if (message.includes("verification failed")) {
         displayError = "Login verification failed. Please try again.";
       }
-      
       setError(displayError);
     } finally {
       setLoading(false);

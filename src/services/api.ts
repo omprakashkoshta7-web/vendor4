@@ -54,20 +54,28 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     headers.set("Authorization", `Bearer ${token}`);
   }
 
+  console.log(`🌐 API Request: ${init.method || 'GET'} ${API_BASE_URL}${path}`);
+  console.log(`🔐 Auth Token: ${token ? 'Present' : 'Missing'}`);
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers,
   });
 
+  console.log(`📡 Response Status: ${response.status} ${response.statusText}`);
+
   const payload = await response.json().catch(() => null);
 
   if (!response.ok) {
-    const message = payload?.message || "Request failed";
+    const message = payload?.message || `HTTP ${response.status}: ${response.statusText}`;
+    
+    console.error(`❌ API Error: ${message}`);
 
     if (response.status === 401 && !_redirecting) {
       _redirecting = true;
       clearAuthToken();
       localStorage.removeItem("vendor_session");
+      console.log("🔒 Authentication failed - redirecting to login");
       // Redirect to login after a short delay to allow current render to finish
       setTimeout(() => {
         window.location.href = "/login";
@@ -82,5 +90,6 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     throw new ApiError("Empty or invalid server response", response.status || 500);
   }
 
+  console.log(`✅ API Success:`, payload);
   return payload as T;
 }

@@ -10,14 +10,13 @@ export const API_ENDPOINTS = {
     verify: "/auth/verify",
     me: "/auth/me",
   },
-  
-  // Organization endpoints
+
   vendor: {
     // Profile
     profile: "/vendor/org/profile",
     legal: "/vendor/org/legal",
     agreement: "/vendor/org/agreement",
-    
+
     // Stores
     storesNearby: "/vendor/stores/nearby",
     stores: "/vendor/stores",
@@ -26,13 +25,13 @@ export const API_ENDPOINTS = {
     storeAvailability: (id: string) => `/vendor/stores/${id}/availability`,
     storeCapacity: (id: string) => `/vendor/stores/${id}/capacity`,
     storeCapabilities: (id: string) => `/vendor/stores/${id}/capabilities`,
-    
+
     // Staff
     staff: "/vendor/staff",
     staffById: (id: string) => `/vendor/staff/${id}`,
     staffStatus: (id: string) => `/vendor/staff/${id}/status`,
     staffAssignStores: (id: string) => `/vendor/staff/${id}/assign-stores`,
-    
+
     // Orders
     ordersAssigned: "/vendor/orders/assigned",
     orderById: (id: string) => `/vendor/orders/${id}`,
@@ -41,47 +40,47 @@ export const API_ENDPOINTS = {
     updateOrderStatus: (id: string) => `/vendor/orders/${id}/status`,
     qcUpload: (id: string) => `/vendor/orders/${id}/qc-upload`,
     markReady: (id: string) => `/vendor/orders/${id}/ready`,
-    
+
     // Analytics
     performance: "/vendor/analytics/performance",
-    
-    // Finance - Wallet
+
+    // Finance - Wallet (using both main and alias endpoints for fallback)
     walletSummary: "/vendor/finance/wallet/summary",
-    walletSummaryAlt: "/vendor/wallet/summary",
+    walletSummaryAlias: "/vendor/wallet/summary", // Alias endpoint
     walletStoreWise: "/vendor/finance/wallet/store-wise",
-    walletStoreWiseAlt: "/vendor/wallet/store-wise",
+    walletStoreWiseAlias: "/vendor/wallet/store-wise", // Alias endpoint
     walletDeductions: "/vendor/finance/wallet/deductions",
-    walletDeductionsAlt: "/vendor/wallet/deductions",
-    
-    // Finance - Closure
+    walletDeductionsAlias: "/vendor/wallet/deductions", // Alias endpoint
+
+    // Finance - Closure (using both main and alias endpoints for fallback)
     closureDaily: "/vendor/finance/closure/daily",
-    closureDailyAlt: "/vendor/closure/daily",
+    closureDailyAlias: "/vendor/closure/daily", // Alias endpoint
     closureWeekly: "/vendor/finance/closure/weekly",
-    closureWeeklyAlt: "/vendor/closure/weekly",
+    closureWeeklyAlias: "/vendor/closure/weekly", // Alias endpoint
     closureMonthly: "/vendor/finance/closure/monthly",
-    closureMonthlyAlt: "/vendor/closure/monthly",
-    
-    // Finance - Payouts
+    closureMonthlyAlias: "/vendor/closure/monthly", // Alias endpoint
+
+    // Finance - Payouts (using both main and alias endpoints for fallback)
     payoutsSchedule: "/vendor/finance/payouts/schedule",
-    payoutsScheduleAlt: "/vendor/payouts/schedule",
+    payoutsScheduleAlias: "/vendor/payouts/schedule", // Alias endpoint
     payoutsHistory: "/vendor/finance/payouts/history",
-    payoutsHistoryAlt: "/vendor/payouts/history",
-    
+    payoutsHistoryAlias: "/vendor/payouts/history", // Alias endpoint
+
+    // Enhanced Finance Service endpoints
+    financeSummary: "/vendor/finance/summary",
+    financePayoutHistory: "/vendor/finance/payout-history",
+    financeWalletSummary: "/vendor/finance/wallet/summary",
+    financeWalletStoreWise: "/vendor/finance/wallet/store-wise",
+    financeWalletDeductions: "/vendor/finance/wallet/deductions",
+
     // Scoring
     rejectionsHistory: "/vendor/scoring/rejections/history",
-    rejectionsHistoryAlt: "/vendor/rejections/history",
     performanceScore: "/vendor/scoring/performance-score",
-  },
-  
-  // Tickets (using notification service)
-  tickets: {
-    list: "/notifications/tickets",
-    summary: "/notifications/tickets/summary",
-    helpCenter: "/notifications/help-center",
-    detail: (id: string) => `/notifications/tickets/${id}`,
-    reply: (id: string) => `/notifications/tickets/${id}/reply`,
-    assign: (id: string) => `/notifications/tickets/${id}/assign`,
-    updateStatus: (id: string) => `/notifications/tickets/${id}/status`,
-    escalate: (id: string) => `/notifications/tickets/${id}/escalate`,
+
+    // Support Tickets — correct endpoint per spec
+    supportTickets: "/vendor/support/tickets",
+    supportTicketById: (id: string) => `/vendor/support/tickets/${id}`,
+    supportTicketReply: (id: string) => `/vendor/support/tickets/${id}/reply`,
+    supportTicketSummary: "/vendor/support/tickets/summary",
   },
 } as const;

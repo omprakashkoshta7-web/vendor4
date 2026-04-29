@@ -31,7 +31,8 @@ export default function CreateStorePage() {
   const [form, setForm] = useState({
     name: "", line1: "", city: "", state: "", pincode: "",
     phone: "", email: "", workingHours: "9:00 AM - 9:00 PM",
-    maxOrdersPerDay: "50", lat: "", lng: "",
+    maxOrdersPerDay: "50", dailyLimit: "50", maxConcurrentOrders: "10",
+    internalCode: "", lat: "", lng: "",
     flows: ["printing"] as string[],
   });
   const [saving, setSaving] = useState(false);
@@ -62,12 +63,18 @@ export default function CreateStorePage() {
     try {
       const res = await createVendorStore({
         name: form.name,
+        internalCode: form.internalCode || undefined,
         address: { line1: form.line1, city: form.city, state: form.state, pincode: form.pincode },
-        phone: form.phone,
-        email: form.email,
+        phone: form.phone || undefined,
+        email: form.email || undefined,
         workingHours: form.workingHours,
         supportedFlows: form.flows,
-        capacity: { maxOrdersPerDay: Number(form.maxOrdersPerDay) || 0, currentLoad: 0 },
+        capacity: {
+          maxOrdersPerDay: Number(form.maxOrdersPerDay) || 50,
+          dailyLimit: Number(form.dailyLimit) || 50,
+          maxConcurrentOrders: Number(form.maxConcurrentOrders) || 10,
+          currentLoad: 0,
+        },
         location: {
           lat: form.lat ? Number(form.lat) : undefined,
           lng: form.lng ? Number(form.lng) : undefined,
@@ -113,10 +120,13 @@ export default function CreateStorePage() {
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Store Name" value={form.name} onChange={set("name")} icon={Store} placeholder="e.g. SpeedCopy Andheri" required />
+            <Field label="Internal Code" value={form.internalCode} onChange={set("internalCode")} placeholder="e.g. CP-001" />
             <Field label="Working Hours" value={form.workingHours} onChange={set("workingHours")} icon={Clock} placeholder="9:00 AM - 9:00 PM" />
             <Field label="Phone" value={form.phone} onChange={set("phone")} icon={Phone} placeholder="+91 XXXXX XXXXX" />
             <Field label="Email" value={form.email} onChange={set("email")} icon={Mail} type="email" placeholder="store@business.com" />
             <Field label="Max Orders / Day" value={form.maxOrdersPerDay} onChange={set("maxOrdersPerDay")} icon={Package} type="number" placeholder="50" />
+            <Field label="Daily Limit" value={form.dailyLimit} onChange={set("dailyLimit")} icon={Package} type="number" placeholder="50" />
+            <Field label="Max Concurrent Orders" value={form.maxConcurrentOrders} onChange={set("maxConcurrentOrders")} type="number" placeholder="10" />
           </div>
         </div>
 

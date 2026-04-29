@@ -50,7 +50,7 @@ export default function StoreDetailPage() {
   const [capabilities, setCapabilities] = useState<any>(null);
   const [form, setForm] = useState({
     name: "", workingHours: "", phone: "", email: "",
-    maxOrdersPerDay: "0", currentLoad: "0",
+    maxOrdersPerDay: "0", currentLoad: "0", dailyLimit: "0", maxConcurrentOrders: "10",
   });
 
   // API 2: GET /api/vendor/stores/:id
@@ -67,6 +67,8 @@ export default function StoreDetailPage() {
         email: res.data.email || "",
         maxOrdersPerDay: String(res.data.capacity?.maxOrdersPerDay || 0),
         currentLoad: String(res.data.capacity?.currentLoad || 0),
+        dailyLimit: String(res.data.capacity?.dailyLimit || res.data.capacity?.maxOrdersPerDay || 0),
+        maxConcurrentOrders: String(res.data.capacity?.maxConcurrentOrders || 10),
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load store");
@@ -109,6 +111,8 @@ export default function StoreDetailPage() {
         updateVendorStoreCapacity(store._id, {
           maxOrdersPerDay: Number(form.maxOrdersPerDay) || 0,
           currentLoad: Number(form.currentLoad) || 0,
+          dailyLimit: Number(form.dailyLimit) || Number(form.maxOrdersPerDay) || 0,
+          maxConcurrentOrders: Number(form.maxConcurrentOrders) || 10,
         }),
       ]);
       setStore({ ...storeRes.data, capacity: capRes.data.capacity });
@@ -283,6 +287,8 @@ export default function StoreDetailPage() {
           <Field label="Phone" value={form.phone} onChange={v => setForm(c => ({ ...c, phone: v }))} disabled={!editMode} icon={Phone} placeholder="+91 XXXXX XXXXX" />
           <Field label="Email" value={form.email} onChange={v => setForm(c => ({ ...c, email: v }))} disabled={!editMode} icon={Mail} type="email" placeholder="store@business.com" />
           <Field label="Max Orders / Day" value={form.maxOrdersPerDay} onChange={v => setForm(c => ({ ...c, maxOrdersPerDay: v }))} disabled={!editMode} icon={Package} type="number" placeholder="50" />
+          <Field label="Daily Limit" value={form.dailyLimit} onChange={v => setForm(c => ({ ...c, dailyLimit: v }))} disabled={!editMode} icon={Package} type="number" placeholder="50" />
+          <Field label="Max Concurrent Orders" value={form.maxConcurrentOrders} onChange={v => setForm(c => ({ ...c, maxConcurrentOrders: v }))} disabled={!editMode} type="number" placeholder="10" />
           <Field label="Current Load" value={form.currentLoad} onChange={v => setForm(c => ({ ...c, currentLoad: v }))} disabled={!editMode} icon={TrendingUp} type="number" placeholder="0" />
         </div>
         {editMode && (

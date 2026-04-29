@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Plus, UserCheck, UserX, X, Users, CheckCircle,
   Shield, User, Search, RefreshCw, Edit2, Store,
-  Mail, Phone, AlertTriangle
+  Mail, Phone, AlertTriangle, Lock
 } from "lucide-react";
 import LoadingState from "../../components/ui/LoadingState";
 import { COLORS } from "../../utils/colors";
@@ -22,12 +22,13 @@ type StaffRole = "manager" | "operator" | "qc";
 type FormState = {
   name: string;
   email: string;
+  password: string;
   phone: string;
   role: StaffRole;
   storeId: string;
 };
 
-const INITIAL_FORM: FormState = { name: "", email: "", phone: "", role: "operator", storeId: "" };
+const INITIAL_FORM: FormState = { name: "", email: "", password: "", phone: "", role: "operator", storeId: "" };
 
 const ROLE_COLORS: Record<StaffRole, { color: string; bg: string; border: string }> = {
   manager: { color: "#8b5cf6", bg: "#f5f3ff", border: "#ddd6fe" },
@@ -107,6 +108,7 @@ export default function StaffListPage() {
     setForm({
       name: member.name,
       email: member.email || "",
+      password: "",           // password not editable via PUT
       phone: member.phone || "",
       role: member.role,
       storeId: member.storeId || "",
@@ -126,14 +128,29 @@ export default function StaffListPage() {
   // API 3: PUT /api/vendor/staff/:id
   const handleSubmit = async () => {
     if (!form.name.trim()) { setFormError("Name is required"); return; }
+    if (!editingId && !form.email.trim()) { setFormError("Email is required"); return; }
+    if (!editingId && !form.password.trim()) { setFormError("Password is required"); return; }
     setSaving(true);
     setFormError("");
     try {
       if (editingId) {
-        const res = await updateVendorStaff(editingId, form);
+        const res = await updateVendorStaff(editingId, {
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          role: form.role,
+          storeId: form.storeId || undefined,
+        });
         setStaff(cur => cur.map(m => m._id === editingId ? res.data : m));
       } else {
-        const res = await createVendorStaff(form);
+        const res = await createVendorStaff({
+          name: form.name,
+          email: form.email,
+          password: form.password,
+          phone: form.phone || undefined,
+          role: form.role,
+          storeId: form.storeId || undefined,
+        });
         setStaff(cur => [res.data, ...cur]);
       }
       setShowFormModal(false);
@@ -375,7 +392,7 @@ export default function StaffListPage() {
 
               {/* Email */}
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Email</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Email {!editingId && "*"}</label>
                 <div className="relative">
                   <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input type="email" value={form.email} onChange={e => setForm(c => ({ ...c, email: e.target.value }))}
@@ -383,6 +400,19 @@ export default function StaffListPage() {
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-gray-900 transition" />
                 </div>
               </div>
+
+              {/* Password — only for create */}
+              {!editingId && (
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Password *</label>
+                  <div className="relative">
+                    <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input type="password" value={form.password} onChange={e => setForm(c => ({ ...c, password: e.target.value }))}
+                      placeholder="Set login password"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-gray-900 transition" />
+                  </div>
+                </div>
+              )}
 
               {/* Phone */}
               <div>
