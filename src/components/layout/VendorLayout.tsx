@@ -183,10 +183,10 @@ export default function VendorLayout() {
   const page = routeMeta.find((item) => location.pathname.startsWith(item.match)) ?? routeMeta[0];
 
   return (
-    <div className="admin-app-shell min-h-screen p-2 sm:p-3 md:p-4">
-      <div className="admin-frame flex min-h-[calc(100vh-1rem)] overflow-hidden rounded-[24px] sm:min-h-[calc(100vh-1.5rem)] sm:rounded-[34px]">
+    <div className="admin-app-shell h-screen overflow-hidden p-2 sm:p-3 md:p-4">
+      <div className="admin-frame flex h-[calc(100vh-1rem)] overflow-hidden rounded-[24px] sm:h-[calc(100vh-1.5rem)] sm:rounded-[34px] md:h-[calc(100vh-2rem)]">
         {/* Desktop Sidebar */}
-        <aside className="admin-sidebar hidden w-[236px] flex-shrink-0 lg:flex lg:flex-col">
+        <aside className="admin-sidebar hidden w-[236px] flex-shrink-0 lg:flex lg:flex-col overflow-hidden">
           <div className="px-5 pb-6 pt-8">
             <div className="flex items-center gap-2">
               <h1 className="text-[2.2rem] font-black lowercase leading-none tracking-tight text-white">

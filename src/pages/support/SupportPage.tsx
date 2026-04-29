@@ -189,11 +189,11 @@ export default function SupportPage() {
       </div>
 
       {loading ? <LoadingState message="Loading support tickets" /> : (
-        <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
-          {/* Table */}
-          <div className="overflow-x-auto">
+        <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden flex flex-col" style={{ maxHeight: "calc(100vh - 320px)", minHeight: "320px" }}>
+          {/* Table with sticky header + scrollable body */}
+          <div className="overflow-x-auto flex-1 overflow-y-auto">
             <table className="w-full text-sm">
-              <thead>
+              <thead className="sticky top-0 z-10">
                 <tr className="border-b border-gray-100 bg-gray-50">
                   <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Subject</th>
                   <th className="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Category</th>
