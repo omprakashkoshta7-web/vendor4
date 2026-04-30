@@ -459,11 +459,13 @@ button {
 
 /* Modal overlay — full viewport coverage with scrolling */
 .admin-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
   z-index: 9999;
   display: flex;
   align-items: center;
@@ -473,17 +475,17 @@ button {
   backdrop-filter: blur(4px);
   overflow-y: auto;
   overflow-x: hidden;
-  min-height: 100vh;
-  min-height: 100dvh; /* Dynamic viewport height for mobile */
 }
 
 /* Vendor modal overlay — full viewport coverage */
 .vendor-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
   z-index: 9999;
   display: flex;
   align-items: center;
@@ -493,11 +495,10 @@ button {
   backdrop-filter: blur(4px);
   overflow-y: auto;
   overflow-x: hidden;
-  min-height: 100vh;
-  min-height: 100dvh;
 }
 
-/* Fix for modals that use inline styles - override with !important */
+/* Fix for modals that use inline styles - FORCE full coverage */
+.fixed.inset-0,
 .fixed.inset-0.bg-black\/50,
 .fixed.inset-0[style*="background"],
 .fixed.inset-0.flex {
@@ -506,6 +507,9 @@ button {
   left: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  margin: 0 !important;
   z-index: 9999 !important;
   backdrop-filter: blur(4px) !important;
   overflow-y: auto !important;
@@ -513,18 +517,32 @@ button {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  min-height: 100vh !important;
-  min-height: 100dvh !important;
+}
+
+/* Ensure background covers entire viewport even when scrolling */
+.fixed.inset-0::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: -1;
+  pointer-events: none;
 }
 
 /* Modal content wrapper - ensures proper centering and prevents cut-off */
 .fixed.inset-0 > div[class*="rounded"],
 .fixed.inset-0 > div[class*="bg-white"] {
+  position: relative !important;
   margin: auto !important;
   max-height: calc(100vh - 3rem) !important;
-  max-height: calc(100dvh - 3rem) !important;
   overflow-y: auto !important;
-  position: relative !important;
+  z-index: 1 !important;
 }
 
 /* Ensure modal content is always visible with proper spacing */
@@ -541,24 +559,10 @@ button {
 
 /* Prevent body scroll when modal is open */
 body.modal-open {
-  overflow: hidden;
-  height: 100vh;
-  height: 100dvh;
-}
-
-/* Ensure transparent background extends to full height on scroll */
-.fixed.inset-0::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: inherit;
-  backdrop-filter: inherit;
-  z-index: -1;
-  min-height: 100vh;
-  min-height: 100dvh;
+  overflow: hidden !important;
+  height: 100vh !important;
+  position: fixed !important;
+  width: 100% !important;
 }
 
 /* Mobile modal fixes */
@@ -570,7 +574,6 @@ body.modal-open {
   
   .fixed.inset-0 > div[class*="rounded"] {
     max-height: calc(100vh - 2rem) !important;
-    max-height: calc(100dvh - 2rem) !important;
     width: calc(100% - 2rem) !important;
   }
   
