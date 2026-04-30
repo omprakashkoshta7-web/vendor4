@@ -18,9 +18,9 @@ export interface NotificationSummary {
 
 export const notificationService = {
   getSummary() {
-    return apiRequest<{ data: NotificationSummary }>("/api/notifications/summary");
+    return apiRequest<{ data: NotificationSummary }>("/vendor/notifications/summary");
   },
   getRecent(limit = 8) {
-    return apiRequest<{ data: { notifications: PortalNotification[] } }>(`/api/notifications?limit=${limit}`);
+    return apiRequest<{ data: { notifications: PortalNotification[] } }>(`/vendor/notifications?limit=${limit}`);
   },
 };

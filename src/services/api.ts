@@ -12,35 +12,20 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * Get the stored backend JWT.
- * This is the short JWT returned by POST /api/auth/verify — NOT a Firebase token.
- */
 export function getAuthToken() {
   return localStorage.getItem(AUTH_TOKEN_KEY);
 }
 
-/**
- * Store the backend JWT after a successful /api/auth/verify exchange.
- */
 export function setAuthToken(token: string) {
   localStorage.setItem(AUTH_TOKEN_KEY, token);
 }
 
-/**
- * Clear the backend JWT on logout.
- */
 export function clearAuthToken() {
   localStorage.removeItem(AUTH_TOKEN_KEY);
 }
 
-// Guard against multiple simultaneous 401 redirects
 let _redirecting = false;
 
-/**
- * Central API request function.
- * Always uses the stored backend JWT — never fetches a Firebase token here.
- */
 export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = getAuthToken();
 
@@ -54,29 +39,20 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  console.log(`🌐 API Request: ${init.method || 'GET'} ${API_BASE_URL}${path}`);
-  console.log(`🔐 Auth Token: ${token ? 'Present' : 'Missing'}`);
-
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers,
   });
 
-  console.log(`📡 Response Status: ${response.status} ${response.statusText}`);
-
   const payload = await response.json().catch(() => null);
 
   if (!response.ok) {
     const message = payload?.message || `HTTP ${response.status}: ${response.statusText}`;
-    
-    console.error(`❌ API Error: ${message}`);
 
     if (response.status === 401 && !_redirecting) {
       _redirecting = true;
       clearAuthToken();
       localStorage.removeItem("vendor_session");
-      console.log("🔒 Authentication failed - redirecting to login");
-      // Redirect to login after a short delay to allow current render to finish
       setTimeout(() => {
         window.location.href = "/login";
         _redirecting = false;
@@ -90,6 +66,5 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     throw new ApiError("Empty or invalid server response", response.status || 500);
   }
 
-  console.log(`✅ API Success:`, payload);
   return payload as T;
 }
