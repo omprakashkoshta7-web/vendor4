@@ -183,8 +183,8 @@ export default function VendorLayout() {
   const page = routeMeta.find((item) => location.pathname.startsWith(item.match)) ?? routeMeta[0];
 
   return (
-    <div className="admin-app-shell h-screen overflow-hidden p-2 sm:p-3 md:p-4">
-      <div className="admin-frame flex h-[calc(100vh-1rem)] overflow-hidden rounded-[24px] sm:h-[calc(100vh-1.5rem)] sm:rounded-[34px] md:h-[calc(100vh-2rem)]">
+    <div className="admin-app-shell h-screen p-2 sm:p-3 md:p-4">
+      <div className="admin-frame flex h-[calc(100vh-1rem)] rounded-[24px] sm:h-[calc(100vh-1.5rem)] sm:rounded-[34px] md:h-[calc(100vh-2rem)]">
         {/* Desktop Sidebar */}
         <aside className="admin-sidebar hidden w-[236px] flex-shrink-0 lg:flex lg:flex-col overflow-hidden">
           <div className="px-5 pb-6 pt-8">
@@ -321,7 +321,7 @@ export default function VendorLayout() {
           </div>
         </aside>
 
-        <div className="admin-content-shell flex min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="admin-content-shell flex min-w-0 flex-1 flex-col">
           <header className="admin-topbar flex items-center justify-between px-4 py-4 sm:px-6 sm:py-5">
             <div className="flex items-center gap-3">
               <button 
@@ -481,8 +481,8 @@ export default function VendorLayout() {
             </div>
           </header>
 
-          <main className="admin-main flex-1 overflow-y-auto px-3 pb-4 pt-4 sm:px-4 sm:pb-5 sm:pt-5 md:px-6 md:pb-7 md:pt-6 lg:px-8">
-            <div className="mx-auto w-full max-w-[980px]">
+          <main className="admin-main flex-1 overflow-y-auto px-3 pb-4 pt-2 sm:px-4 sm:pb-5 sm:pt-3 md:px-6 md:pb-7 md:pt-4 lg:px-8">
+            <div className="w-full">
               <Outlet />
             </div>
           </main>

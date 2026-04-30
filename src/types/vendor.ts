@@ -221,8 +221,8 @@ export interface VendorPayout {
   _id: string;
   vendorId: string;
   amount: number;
-  platformFee: number;
-  netAmount: number;
+  platformFee?: number;
+  netAmount?: number;
   currency?: string;
   status: "pending" | "processing" | "paid" | "failed";
   orderIds?: string[];
@@ -236,132 +236,167 @@ export interface VendorPayout {
   periodStart?: string;
   periodEnd?: string;
   notes?: string;
-  deductions?: {
+  breakdown?: {
     platformFee: number;
     gst: number;
-    other: number;
+    other?: number;
+    grossAmount?: number;
+    netAmount?: number;
   };
   grossAmount?: number;
   createdAt?: string;
   updatedAt?: string;
+  paidAt?: string;
 }
 
 export interface VendorWalletSummary {
+  _id: string;
+  userId: string;
+  userType: string;
   balance: number;
-  pendingSettlement: number;
-  availableForWithdrawal: number;
-  // Enhanced fields
-  currentBalance?: number;
-  pendingEarnings?: number;
-  totalEarningsThisMonth?: number;
-  totalEarningsAllTime?: number;
-  averageOrderValue?: number;
-  topPerformingStore?: {
-    storeId: string;
-    storeName: string;
-    earnings: number;
-    orderCount: number;
-  };
-  recentTransactions?: Array<{
-    _id: string;
-    type: "credit" | "debit";
-    category: "order_payment" | "payout" | "payout_deduction";
-    amount: number;
-    balanceBefore: number;
-    balanceAfter: number;
-    referenceId: string;
-    description: string;
-    createdAt: string;
-  }>;
+  currency: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  // Legacy fields for backward compatibility
+  pendingSettlement?: number;
+  availableForWithdrawal?: number;
 }
 
 export interface VendorStoreWiseEarnings {
   _id: string;
   earnings: number;
   orderCount: number;
-  // Enhanced fields
-  storeId?: string;
-  storeName?: string;
-  totalEarnings?: number;
-  ordersCompleted?: number;
-  avgOrderValue?: number;
-  thisMonthEarnings?: number;
-  lastOrderDate?: string;
-  performance?: {
-    acceptanceRate: number;
-    completionRate: number;
-    avgDeliveryTime: number;
+}
+
+export interface VendorDeduction {
+  _id: string;
+  walletId: string;
+  userId: string;
+  type: "debit" | "credit";
+  category: "payout_deduction" | "refund" | "platform_fee" | "gst" | "other";
+  amount: number;
+  balanceBefore: number;
+  balanceAfter: number;
+  referenceId: string;
+  referenceType: "payout" | "order" | "other";
+  description: string;
+  metadata?: Record<string, any>;
+  createdAt: string;
+}
+
+export interface VendorClosureDaily {
+  period: "daily";
+  date: string;
+  earnings: number;
+  count: number;
+  breakdown: {
+    orders: Array<{
+      orderId: string;
+      orderNumber: string;
+      amount: number;
+      status: string;
+      completedAt: string;
+    }>;
   };
 }
 
-export interface VendorClosureReport {
-  period: "daily" | "weekly" | "monthly";
-  earnings: number;
-  count: number;
-  // Enhanced fields
-  date?: string;
-  weekStart?: string;
-  weekEnd?: string;
-  month?: string;
-  orderCount?: number;
-  breakdown?: {
-    grossEarnings: number;
-    platformFee: number;
-    gst: number;
-    netEarnings: number;
-  };
-  ordersByStatus?: {
-    completed: number;
-    cancelled: number;
-    refunded: number;
-  };
-  storeWise?: Array<{
-    storeId: string;
-    storeName: string;
-    earnings: number;
-    orderCount: number;
-  }>;
-  dailyBreakdown?: Array<{
+export interface VendorClosureWeekly {
+  period: "weekly";
+  weekStart: string;
+  weekEnd: string;
+  totalEarnings: number;
+  totalOrders: number;
+  dailyBreakdown: Array<{
     date: string;
     earnings: number;
     orders: number;
+    avgOrderValue: number;
   }>;
-  weeklyBreakdown?: Array<{
+  stats: {
+    avgDailyEarnings: number;
+    maxDailyEarnings: number;
+    minDailyEarnings: number;
+    bestDay: string;
+    worstDay: string;
+  };
+}
+
+export interface VendorClosureMonthly {
+  period: "monthly";
+  month: string;
+  totalEarnings: number;
+  totalOrders: number;
+  weeklyBreakdown: Array<{
     week: string;
     earnings: number;
     orders: number;
+    avgOrderValue: number;
   }>;
-  categoryWise?: {
-    printing: { earnings: number; orders: number };
-    gifting: { earnings: number; orders: number };
-    shopping: { earnings: number; orders: number };
+  categoryWise: {
+    printing: { earnings: number; orders: number; percentage: number; avgOrderValue: number };
+    gifting: { earnings: number; orders: number; percentage: number; avgOrderValue: number };
+    shopping: { earnings: number; orders: number; percentage: number; avgOrderValue: number };
   };
-  topPerformingDay?: {
-    date: string;
-    earnings: number;
-    orders: number;
-  };
-  topPerformingWeek?: {
-    week: string;
-    earnings: number;
-    orders: number;
+  stats: {
+    avgDailyEarnings: number;
+    maxDailyEarnings: number;
+    minDailyEarnings: number;
+    bestWeek: string;
+    bestDay: string;
+    totalDaysActive: number;
   };
 }
 
 export interface VendorPayoutSchedule {
-  nextPayoutDate: Date | string;
+  nextPayoutDate: string;
   estimatedAmount: number;
-}
-
-export interface VendorFinanceSummary {
-  pendingPayout: number;
-  totalPaid: number;
-  currentMonthEarnings: number;
   lastPayoutDate: string;
   lastPayoutAmount: number;
-  totalOrders: number;
-  completedOrders: number;
-  avgOrderValue: number;
+  payoutFrequency: string;
+  payoutMethod: string;
+  bankAccount: {
+    accountName: string;
+    accountNumber: string;
+    ifscCode: string;
+    bankName: string;
+  };
+  estimatedDeductions: {
+    platformFee: number;
+    gst: number;
+    other: number;
+  };
+  estimatedNetAmount: number;
+}
+
+export interface VendorPayoutRecord {
+  _id: string;
+  vendorId: string;
+  payoutDate: string;
+  amount: number;
+  status: "paid" | "pending" | "processing" | "failed";
+  transactionId: string;
+  bankAccount: string;
+  ordersIncluded: number;
+  periodStart: string;
+  periodEnd: string;
+  breakdown: {
+    grossAmount: number;
+    platformFee: number;
+    gst: number;
+    netAmount: number;
+  };
+  paidAt: string;
+}
+
+export interface VendorPayoutHistory {
+  payouts: VendorPayoutRecord[];
+  summary: {
+    totalPayouts: number;
+    totalAmount: number;
+    avgPayoutAmount: number;
+    lastPayoutDate: string;
+  };
 }
 
 export interface SupportReply {

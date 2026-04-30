@@ -53,10 +53,10 @@ export default function PayoutsPage() {
   );
 
   const stats = useMemo(() => ({
-    totalPaid: payouts.filter(p => p.status === "paid").reduce((s, p) => s + p.netAmount, 0),
-    pending: payouts.filter(p => p.status === "pending").reduce((s, p) => s + p.netAmount, 0),
+    totalPaid: payouts.filter(p => p.status === "paid").reduce((s, p) => s + (p.breakdown?.netAmount ?? p.amount ?? 0), 0),
+    pending: payouts.filter(p => p.status === "pending").reduce((s, p) => s + (p.breakdown?.netAmount ?? p.amount ?? 0), 0),
     totalCount: payouts.length,
-    avgPayout: payouts.length ? Math.round(payouts.reduce((s, p) => s + p.netAmount, 0) / payouts.length) : 0,
+    avgPayout: payouts.length ? Math.round(payouts.reduce((s, p) => s + (p.breakdown?.netAmount ?? p.amount ?? 0), 0) / payouts.length) : 0,
   }), [payouts]);
 
   const exportHistory = () => {
@@ -156,7 +156,7 @@ export default function PayoutsPage() {
         </div>
 
         {filteredPayouts.length > 0 ? (
-          <div className="space-y-3">
+          <div className="card-list space-y-3 pr-1">
             {filteredPayouts.map(payout => {
               const sc = STATUS_STYLE[payout.status] || STATUS_STYLE.pending;
               return (
@@ -171,9 +171,9 @@ export default function PayoutsPage() {
                         }
                       </div>
                       <div>
-                        <p className="text-base font-black text-gray-900">₹{payout.netAmount.toLocaleString()}</p>
+                        <p className="text-base font-black text-gray-900">₹{payout.breakdown?.netAmount?.toLocaleString() || payout.amount?.toLocaleString()}</p>
                         <p className="text-xs text-gray-500 mt-0.5">
-                          {payout.createdAt ? new Date(payout.createdAt).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"}
+                          {payout.payoutDate ? new Date(payout.payoutDate).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"}
                         </p>
                       </div>
                     </div>
@@ -185,13 +185,14 @@ export default function PayoutsPage() {
 
                   {/* Details row */}
                   <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-500">
-                    <span>Gross: <span className="font-semibold text-gray-700">₹{payout.amount.toLocaleString()}</span></span>
-                    <span>Platform Fee: <span className="font-semibold text-gray-700">₹{payout.platformFee.toLocaleString()}</span></span>
-                    {payout.orderIds && payout.orderIds.length > 0 && (
-                      <span>{payout.orderIds.length} orders included</span>
+                    <span>Gross: <span className="font-semibold text-gray-700">₹{payout.breakdown?.grossAmount?.toLocaleString() || payout.amount?.toLocaleString()}</span></span>
+                    <span>Platform Fee: <span className="font-semibold text-gray-700">₹{payout.breakdown?.platformFee?.toLocaleString() || 0}</span></span>
+                    <span>GST: <span className="font-semibold text-gray-700">₹{payout.breakdown?.gst?.toLocaleString() || 0}</span></span>
+                    {payout.ordersIncluded && (
+                      <span>{payout.ordersIncluded} orders included</span>
                     )}
-                    {payout.transferId && (
-                      <span>Transfer: <span className="font-mono text-gray-700">{payout.transferId}</span></span>
+                    {payout.transactionId && (
+                      <span>TXN: <span className="font-mono text-gray-700">{payout.transactionId}</span></span>
                     )}
                     {payout.periodStart && payout.periodEnd && (
                       <span>
@@ -200,17 +201,11 @@ export default function PayoutsPage() {
                     )}
                   </div>
 
-                  {/* Failure reason */}
-                  {payout.failureReason && (
-                    <div className="mt-2 p-2 rounded-lg text-xs font-semibold"
-                      style={{ backgroundColor: COLORS.errorBg, color: COLORS.error }}>
-                      ⚠ {payout.failureReason}
+                  {/* Bank Account */}
+                  {payout.bankAccount && (
+                    <div className="mt-2 p-2 rounded-lg bg-gray-50 text-xs text-gray-600">
+                      Bank: {payout.bankAccount}
                     </div>
-                  )}
-
-                  {/* Notes */}
-                  {payout.notes && (
-                    <p className="mt-2 text-xs text-gray-400 italic">{payout.notes}</p>
                   )}
                 </div>
               );

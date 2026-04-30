@@ -44,34 +44,22 @@ export const API_ENDPOINTS = {
     // Analytics
     performance: "/vendor/analytics/performance",
 
-    // Finance - Wallet (using both main and alias endpoints for fallback)
+    // Finance - Wallet
     walletSummary: "/vendor/finance/wallet/summary",
-    walletSummaryAlias: "/vendor/wallet/summary", // Alias endpoint
     walletStoreWise: "/vendor/finance/wallet/store-wise",
-    walletStoreWiseAlias: "/vendor/wallet/store-wise", // Alias endpoint
     walletDeductions: "/vendor/finance/wallet/deductions",
-    walletDeductionsAlias: "/vendor/wallet/deductions", // Alias endpoint
 
-    // Finance - Closure (using both main and alias endpoints for fallback)
+    // Finance - Closure
     closureDaily: "/vendor/finance/closure/daily",
-    closureDailyAlias: "/vendor/closure/daily", // Alias endpoint
     closureWeekly: "/vendor/finance/closure/weekly",
-    closureWeeklyAlias: "/vendor/closure/weekly", // Alias endpoint
     closureMonthly: "/vendor/finance/closure/monthly",
-    closureMonthlyAlias: "/vendor/closure/monthly", // Alias endpoint
 
-    // Finance - Payouts (using both main and alias endpoints for fallback)
+    // Finance - Payouts
     payoutsSchedule: "/vendor/finance/payouts/schedule",
-    payoutsScheduleAlias: "/vendor/payouts/schedule", // Alias endpoint
     payoutsHistory: "/vendor/finance/payouts/history",
-    payoutsHistoryAlias: "/vendor/payouts/history", // Alias endpoint
 
-    // Enhanced Finance Service endpoints
-    financeSummary: "/vendor/finance/summary",
-    financePayoutHistory: "/vendor/finance/payout-history",
-    financeWalletSummary: "/vendor/finance/wallet/summary",
-    financeWalletStoreWise: "/vendor/finance/wallet/store-wise",
-    financeWalletDeductions: "/vendor/finance/wallet/deductions",
+    // Finance - Summary (dashboard)
+    financeSummary: "/vendor/finance/wallet/summary",
 
     // Scoring
     rejectionsHistory: "/vendor/scoring/rejections/history",

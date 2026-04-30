@@ -267,7 +267,7 @@ export default function StaffListPage() {
 
       {/* Staff Grid */}
       {loading ? <LoadingState message="Loading staff members" /> : (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="card-list-lg grid gap-4 lg:grid-cols-2 pr-1">
           {filteredStaff.map(member => {
             const rc = ROLE_COLORS[member.role] || ROLE_COLORS.operator;
             const storeName = getStoreName(member.storeId);
@@ -362,8 +362,8 @@ export default function StaffListPage() {
 
       {/* Create / Edit Modal — API 2 + API 3 */}
       {showFormModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl my-auto">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-lg font-bold text-gray-900">{editingId ? "Edit Staff Member" : "Add Staff Member"}</h3>
               <button onClick={() => setShowFormModal(false)}>
@@ -480,8 +480,8 @@ export default function StaffListPage() {
 
       {/* Assign Stores Modal — API 5 */}
       {showAssignModal && assigningMember && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl my-auto">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-lg font-bold text-gray-900">Assign Stores</h3>
               <button onClick={() => setShowAssignModal(false)}>

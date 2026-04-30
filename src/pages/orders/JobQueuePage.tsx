@@ -181,7 +181,7 @@ export default function JobQueuePage() {
 
       {/* Orders List */}
       {loading ? <LoadingState message="Loading job queue" /> : (
-        <div className="space-y-3">
+        <div className="card-list space-y-3 pr-1">
           {filteredOrders.map(order => {
             const normalizedStatus = STATUS_MAP[order.status] || "pending";
             const sc = STATUS_STYLE[normalizedStatus] || STATUS_STYLE.pending;
@@ -269,8 +269,8 @@ export default function JobQueuePage() {
 
       {/* Reject Modal — API 4 */}
       {rejectingOrder && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl my-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-gray-900">Reject Order</h3>
               <button onClick={() => { setRejectingOrder(null); setRejectReason(""); }}>

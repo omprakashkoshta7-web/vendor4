@@ -84,10 +84,42 @@ export default function EarningsPage() {
 
       {/* API 1: Wallet Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <VendorMetricCard index={0} label="Total Balance" value={`₹${(wallet?.balance || 0).toLocaleString()}`} accent={COLORS.primary} accentBg={`${COLORS.primary}18`} note="Current wallet balance" icon={DollarSign} />
-        <VendorMetricCard index={1} label="Pending Settlement" value={`₹${(wallet?.pendingSettlement || 0).toLocaleString()}`} accent={COLORS.warning} accentBg={COLORS.warningBg} note="Awaiting release" icon={Clock} />
-        <VendorMetricCard index={2} label="Available" value={`₹${(wallet?.availableForWithdrawal || 0).toLocaleString()}`} accent={COLORS.success} accentBg={COLORS.successBg} note="Ready to withdraw" icon={TrendingUp} />
-        <VendorMetricCard index={3} label="Total Orders" value={String(totalOrders)} accent={COLORS.info} accentBg={COLORS.infoBg} note="Across all stores" icon={Store} />
+        <VendorMetricCard 
+          index={0} 
+          label="Total Balance" 
+          value={`₹${(wallet?.balance || 0).toLocaleString()}`} 
+          accent={COLORS.primary} 
+          accentBg={`${COLORS.primary}18`} 
+          note={`Currency: ${wallet?.currency || "INR"}`} 
+          icon={DollarSign} 
+        />
+        <VendorMetricCard 
+          index={1} 
+          label="Pending Settlement" 
+          value={`₹${(wallet?.pendingSettlement || 0).toLocaleString()}`} 
+          accent={COLORS.warning} 
+          accentBg={COLORS.warningBg} 
+          note="Awaiting release" 
+          icon={Clock} 
+        />
+        <VendorMetricCard 
+          index={2} 
+          label="Available" 
+          value={`₹${(wallet?.availableForWithdrawal || 0).toLocaleString()}`} 
+          accent={COLORS.success} 
+          accentBg={COLORS.successBg} 
+          note="Ready to withdraw" 
+          icon={TrendingUp} 
+        />
+        <VendorMetricCard 
+          index={3} 
+          label="Total Orders" 
+          value={String(totalOrders)} 
+          accent={COLORS.info} 
+          accentBg={COLORS.infoBg} 
+          note="Across all stores" 
+          icon={Store} 
+        />
       </div>
 
       {/* API 2: Store-wise Earnings Chart */}
@@ -122,62 +154,74 @@ export default function EarningsPage() {
       {/* API 2: Store-wise Table + API 3: Deductions */}
       <div className="grid gap-5 lg:grid-cols-2">
         {/* Store-wise breakdown */}
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <h3 className="text-base font-bold text-gray-900 mb-4">Store Breakdown</h3>
-          {storeWise.length > 0 ? (
-            <div className="space-y-3">
-              {storeWise.map(s => {
-                const pct = totalEarnings > 0 ? Math.round((s.earnings / totalEarnings) * 100) : 0;
-                return (
-                  <div key={s._id} className="p-3 rounded-xl bg-gray-50 border border-gray-200">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-bold text-gray-900">
-                        {storeNameMap.get(s._id) || `Store ${s._id?.slice(-6)}`}
-                      </p>
-                      <p className="text-sm font-black text-gray-900">₹{(s.earnings || 0).toLocaleString()}</p>
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm scroll-card">
+          <h3 className="text-base font-bold text-gray-900 mb-4 flex-shrink-0">Store Breakdown</h3>
+          <div className="scroll-card-body space-y-3 pr-1">
+            {storeWise.length > 0 ? (
+              <>
+                {storeWise.map(s => {
+                  const pct = totalEarnings > 0 ? Math.round((s.earnings / totalEarnings) * 100) : 0;
+                  return (
+                    <div key={s._id} className="p-3 rounded-xl bg-gray-50 border border-gray-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-bold text-gray-900">
+                          {storeNameMap.get(s._id) || `Store ${s._id?.slice(-6)}`}
+                        </p>
+                        <p className="text-sm font-black text-gray-900">₹{(s.earnings || 0).toLocaleString()}</p>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
+                        <span>{s.orderCount || 0} orders</span>
+                        <span>{pct}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-1.5">
+                        <div className="h-1.5 rounded-full" style={{ width: `${pct}%`, backgroundColor: COLORS.primary }} />
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
-                      <span>{s.orderCount || 0} orders</span>
-                      <span>{pct}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-1.5">
-                      <div className="h-1.5 rounded-full" style={{ width: `${pct}%`, backgroundColor: COLORS.primary }} />
-                    </div>
-                  </div>
-                );
-              })}
-              <div className="flex items-center justify-between p-3 rounded-xl border border-gray-300 bg-gray-100">
-                <p className="text-sm font-bold text-gray-700">Total</p>
-                <p className="text-sm font-black text-gray-900">₹{totalEarnings.toLocaleString()}</p>
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm text-gray-400 text-center py-6">No store earnings data</p>
-          )}
+                  );
+                })}
+                <div className="flex items-center justify-between p-3 rounded-xl border border-gray-300 bg-gray-100">
+                  <p className="text-sm font-bold text-gray-700">Total</p>
+                  <p className="text-sm font-black text-gray-900">₹{totalEarnings.toLocaleString()}</p>
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-gray-400 text-center py-6">No store earnings data</p>
+            )}
+          </div>
         </div>
 
         {/* API 3: Deductions */}
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <h3 className="text-base font-bold text-gray-900 mb-4">Deductions</h3>
-          {deductions.length > 0 ? (
-            <div className="space-y-3">
-              {deductions.map((d: any, i: number) => (
-                <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{d.type || d.reason || "Deduction"}</p>
-                    <p className="text-xs text-gray-500">{d.date ? new Date(d.date).toLocaleDateString() : "—"}</p>
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm scroll-card">
+          <h3 className="text-base font-bold text-gray-900 mb-4 flex-shrink-0">Deductions</h3>
+          <div className="scroll-card-body pr-1">
+            {deductions.length > 0 ? (
+              <div className="space-y-3">
+                {deductions.map((d: any) => (
+                  <div key={d._id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{d.description || d.category}</p>
+                      <p className="text-xs text-gray-500">
+                        {d.referenceType && `${d.referenceType}: ${d.referenceId}`}
+                        {d.createdAt && ` • ${new Date(d.createdAt).toLocaleDateString()}`}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold" style={{ color: COLORS.error }}>-₹{(d.amount || 0).toLocaleString()}</p>
+                      {d.metadata?.feePercentage && (
+                        <p className="text-xs text-gray-500">{d.metadata.feePercentage}% fee</p>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-sm font-bold" style={{ color: COLORS.error }}>-₹{(d.amount || 0).toLocaleString()}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <CreditCard size={32} className="text-gray-300 mb-2" />
-              <p className="text-sm text-gray-400">No deductions recorded</p>
-              <p className="text-xs text-gray-400 mt-1">Platform fees and deductions will appear here</p>
-            </div>
-          )}
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <CreditCard size={32} className="text-gray-300 mb-2" />
+                <p className="text-sm text-gray-400">No deductions recorded</p>
+                <p className="text-xs text-gray-400 mt-1">Platform fees and deductions will appear here</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

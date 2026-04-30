@@ -154,7 +154,7 @@ export default function StoreListPage() {
 
       {/* Store Cards */}
       {loading ? <LoadingState message="Loading stores" /> : (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="card-list-lg grid gap-4 lg:grid-cols-2 pr-1">
           {filteredStores.map(store => {
             const isOnline = store.isActive && store.isAvailable;
             const load = store.capacity?.currentLoad || 0;
@@ -275,8 +275,8 @@ export default function StoreListPage() {
 
       {/* Capabilities Modal — API 7 */}
       {capabilitiesModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl my-auto">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-lg font-bold text-gray-900">Store Capabilities</h3>
               <button onClick={() => setCapabilitiesModal(null)}>

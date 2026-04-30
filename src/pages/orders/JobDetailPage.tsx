@@ -352,12 +352,12 @@ export default function JobDetailPage() {
 
       {/* Order Items */}
       {order?.items && order.items.length > 0 && (
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm scroll-card">
+          <div className="flex items-center gap-2 mb-4 flex-shrink-0">
             <Package size={16} style={{ color: COLORS.primary }} />
             <h2 className="text-base font-bold text-gray-900">Order Items</h2>
           </div>
-          <div className="space-y-3">
+          <div className="scroll-card-body space-y-3 pr-1">
             {order.items.map((item, i) => (
               <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200">
                 <div>
@@ -368,7 +368,7 @@ export default function JobDetailPage() {
             ))}
           </div>
           {order.notes && (
-            <div className="mt-3 p-3 rounded-xl border border-gray-200 bg-yellow-50">
+            <div className="mt-3 p-3 rounded-xl border border-gray-200 bg-yellow-50 flex-shrink-0">
               <p className="text-xs font-bold text-yellow-700 mb-1">Order Notes</p>
               <p className="text-sm text-yellow-800">{order.notes}</p>
             </div>
@@ -378,12 +378,12 @@ export default function JobDetailPage() {
 
       {/* Timeline */}
       {order?.timeline && order.timeline.length > 0 && (
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm scroll-card">
+          <div className="flex items-center gap-2 mb-4 flex-shrink-0">
             <Clock size={16} style={{ color: COLORS.info }} />
             <h2 className="text-base font-bold text-gray-900">Order Timeline</h2>
           </div>
-          <div className="space-y-3">
+          <div className="scroll-card-body space-y-3 pr-1">
             {[...order.timeline].reverse().map((entry, i) => (
               <div key={i} className="flex items-start gap-3">
                 <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0" style={{ backgroundColor: COLORS.primary }} />
@@ -402,8 +402,8 @@ export default function JobDetailPage() {
 
       {/* Reject Modal — API 4 */}
       {showRejectModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl my-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-gray-900">Reject Order</h3>
               <button onClick={() => setShowRejectModal(false)}><X size={18} className="text-gray-400" /></button>
@@ -431,8 +431,8 @@ export default function JobDetailPage() {
 
       {/* QC Upload Modal — API 6 */}
       {showQcModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl my-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-gray-900">Upload QC Images</h3>
               <button onClick={() => setShowQcModal(false)}><X size={18} className="text-gray-400" /></button>

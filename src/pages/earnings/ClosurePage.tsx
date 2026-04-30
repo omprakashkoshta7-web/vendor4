@@ -30,12 +30,15 @@ export default function ClosurePage() {
       else if (period === "monthly") res = await getVendorClosureMonthly(selectedDate);
       else res = await getVendorClosureDaily(selectedDate);
 
-      const d = res.data || { period, earnings: 0, count: 0 };
+      const d = res.data;
+      const earnings = d.earnings || d.totalEarnings || 0;
+      const count = d.count || d.totalOrders || 0;
       setClosure({
         period: d.period || period,
-        earnings: d.earnings || 0,
-        count: d.count || 0,
-        avgOrderValue: d.count > 0 ? Math.round(d.earnings / d.count) : 0,
+        earnings: earnings,
+        count: count,
+        avgOrderValue: count > 0 ? Math.round(earnings / count) : 0,
+        fullData: d,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load closure");

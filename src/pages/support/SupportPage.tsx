@@ -272,8 +272,8 @@ export default function SupportPage() {
 
       {/* Ticket Detail Modal — API 4 + API 5 */}
       {activeTicket && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setActiveTicket(null)}>
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] shadow-2xl flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto" onClick={() => setActiveTicket(null)}>
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] shadow-2xl flex flex-col overflow-hidden my-auto" onClick={e => e.stopPropagation()}>
             {/* Modal Header */}
             <div className="p-6 border-b border-gray-100 flex items-start justify-between gap-3 flex-shrink-0">
               <div className="flex-1 min-w-0">
@@ -386,8 +386,8 @@ export default function SupportPage() {
 
       {/* Create Ticket Modal — API 2 */}
       {showNew && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-2xl">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-2xl my-auto">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-lg font-bold text-gray-900">Raise Support Ticket</h3>
               <button onClick={() => setShowNew(false)}><X size={18} className="text-gray-400" /></button>
