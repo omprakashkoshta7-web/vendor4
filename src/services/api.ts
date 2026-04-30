@@ -39,15 +39,21 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const fullUrl = `${API_BASE_URL}${path}`;
+  console.log(`🌐 API Request: ${init.method || 'GET'} ${fullUrl}`);
+
+  const response = await fetch(fullUrl, {
     ...init,
     headers,
   });
 
   const payload = await response.json().catch(() => null);
 
+  console.log(`📡 API Response [${response.status}]:`, path, payload);
+
   if (!response.ok) {
     const message = payload?.message || `HTTP ${response.status}: ${response.statusText}`;
+    console.error(`❌ API Error [${response.status}]:`, path, message);
 
     if (response.status === 401 && !_redirecting) {
       _redirecting = true;
@@ -63,6 +69,7 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   }
 
   if (payload == null) {
+    console.error("❌ Empty API Response:", path);
     throw new ApiError("Empty or invalid server response", response.status || 500);
   }
 

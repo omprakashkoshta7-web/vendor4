@@ -6,6 +6,7 @@ import {
   Clock, AlertTriangle, X, Upload
 } from "lucide-react";
 import LoadingState from "../../components/ui/LoadingState";
+import Alert from "../../components/ui/Alert";
 import { COLORS } from "../../utils/colors";
 import {
   acceptVendorOrder,
@@ -220,11 +221,7 @@ export default function JobDetailPage() {
       </div>
 
       {error && (
-        <div className="rounded-xl border px-4 py-3 text-sm flex items-center gap-2"
-          style={{ backgroundColor: COLORS.errorBg, borderColor: COLORS.errorBorder, color: COLORS.error }}>
-          <AlertTriangle size={14} /> {error}
-          <button onClick={() => setError("")} className="ml-auto"><X size={14} /></button>
-        </div>
+        <Alert type="error" message={error} onClose={() => setError("")} />
       )}
 
       {/* Order Header */}

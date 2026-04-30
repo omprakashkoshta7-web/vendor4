@@ -26,17 +26,50 @@ export default function EarningsPage() {
     try {
       setLoading(true);
       setError("");
+      
+      console.log("🔍 [Finance Debug] Starting API calls...");
+      
       const [walletRes, storeWiseRes, deductionsRes, storesRes] = await Promise.all([
-        getVendorWalletSummary(),
-        getVendorWalletStoreWise(),
-        getVendorWalletDeductions(),
-        getVendorStores(),
+        getVendorWalletSummary().then(res => {
+          console.log("✅ Wallet Summary Response:", res);
+          return res;
+        }).catch(err => {
+          console.error("❌ Wallet Summary Error:", err);
+          throw err;
+        }),
+        getVendorWalletStoreWise().then(res => {
+          console.log("✅ Store-wise Response:", res);
+          return res;
+        }).catch(err => {
+          console.error("❌ Store-wise Error:", err);
+          throw err;
+        }),
+        getVendorWalletDeductions().then(res => {
+          console.log("✅ Deductions Response:", res);
+          return res;
+        }).catch(err => {
+          console.error("❌ Deductions Error:", err);
+          throw err;
+        }),
+        getVendorStores().then(res => {
+          console.log("✅ Stores Response:", res);
+          return res;
+        }).catch(err => {
+          console.error("❌ Stores Error:", err);
+          throw err;
+        }),
       ]);
+      
+      console.log("📊 [Finance Debug] Wallet Data:", walletRes.data);
+      console.log("📊 [Finance Debug] Store-wise Data:", storeWiseRes.data);
+      console.log("📊 [Finance Debug] Deductions Data:", deductionsRes.data);
+      
       setWallet(walletRes.data);
       setStoreWise(Array.isArray(storeWiseRes.data) ? storeWiseRes.data : []);
       setDeductions((deductionsRes.data as any)?.deductions || []);
       setStores(storesRes.data || []);
     } catch (err) {
+      console.error("❌ [Finance Debug] Load Error:", err);
       setError(err instanceof Error ? err.message : "Failed to load earnings");
     } finally {
       setLoading(false);
