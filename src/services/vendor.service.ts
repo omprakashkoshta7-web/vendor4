@@ -159,10 +159,10 @@ export async function updateVendorStoreStatus(id: string, isActive: boolean) {
   });
 }
 
-export async function updateVendorStoreAvailability(id: string, isAvailable: boolean) {
+export async function updateVendorStoreAvailability(id: string, isAvailable: boolean, reason?: string) {
   return apiRequest<ApiEnvelope<VendorStore>>(API_ENDPOINTS.vendor.storeAvailability(id), {
     method: "PATCH",
-    body: JSON.stringify({ isAvailable }),
+    body: JSON.stringify({ isAvailable, ...(reason && { availabilityReason: reason }) }),
   });
 }
 

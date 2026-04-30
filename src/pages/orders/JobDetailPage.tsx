@@ -408,11 +408,24 @@ export default function JobDetailPage() {
               <h3 className="text-lg font-bold text-gray-900">Reject Order</h3>
               <button onClick={() => setShowRejectModal(false)}><X size={18} className="text-gray-400" /></button>
             </div>
-            <div className="mb-5">
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Reason *</label>
+            <div className="mb-4">
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Select Reason *</label>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {["Capacity full","Machine unavailable","Material shortage","Staff unavailable","Outside service area","Other"].map(r => (
+                  <button key={r} type="button" onClick={() => setRejectReason(r)}
+                    className="px-3 py-2 rounded-xl border text-xs font-semibold text-left transition"
+                    style={{
+                      backgroundColor: rejectReason === r ? `${COLORS.error}12` : "white",
+                      borderColor: rejectReason === r ? COLORS.error : "#e5e7eb",
+                      color: rejectReason === r ? COLORS.error : "#6b7280",
+                    }}>
+                    {r}
+                  </button>
+                ))}
+              </div>
               <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)}
-                placeholder="Explain why you cannot fulfill this order..."
-                className="w-full h-28 rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-gray-900 transition resize-none" />
+                placeholder="Or type a custom reason..."
+                className="w-full h-20 rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-gray-900 transition resize-none" />
             </div>
             <div className="flex gap-3">
               <button onClick={() => setShowRejectModal(false)}
