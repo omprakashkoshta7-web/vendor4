@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, CheckCircle, PlayCircle, ShieldCheck,
   Truck, XCircle, Camera, RefreshCw, Package,
-  Clock, AlertTriangle, X, Upload
+  Clock, X, Upload
 } from "lucide-react";
 import LoadingState from "../../components/ui/LoadingState";
 import Alert from "../../components/ui/Alert";
