@@ -72,6 +72,8 @@ export interface VendorProfile {
   updatedAt?: string;
 }
 
+// ── Store ────────────────────────────────────────────────────────────────────
+// GET /api/vendor/stores, GET /api/vendor/stores/:id
 export interface VendorStore {
   _id: string;
   vendorId: string;
@@ -91,6 +93,44 @@ export interface VendorStore {
   };
   phone?: string;
   email?: string;
+  workingHours?: string;           // e.g. "9:00 AM - 9:00 PM"
+  operatingHours?: {
+    open?: string;                 // e.g. "09:00"
+    close?: string;                // e.g. "21:00"
+  };
+  workingDays?: string[];          // ["Mon","Tue","Wed","Thu","Fri","Sat"]
+  capacity?: {
+    maxOrdersPerDay?: number;      // default 50
+    currentLoad?: number;          // default 0
+    dailyLimit?: number;           // default 50
+    maxConcurrentOrders?: number;  // default 10
+  };
+  supportedFlows?: string[];       // enum: "printing" | "gifting" | "shopping"
+  assignmentZones?: string[];
+  isActive: boolean;
+  isAvailable: boolean;
+  availabilityReason?: string;     // auto-set by backend on availability toggle
+  deletedAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// POST /api/vendor/stores — create payload
+export interface CreateStorePayload {
+  name: string;                    // required
+  address: {
+    line1: string;                 // required
+    line2?: string;
+    city: string;                  // required
+    state: string;                 // required
+    pincode: string;               // required
+  };
+  location?: {
+    lat?: number;
+    lng?: number;
+  };
+  phone?: string;
+  email?: string;
   workingHours?: string;
   operatingHours?: { open?: string; close?: string };
   workingDays?: string[];
@@ -101,12 +141,54 @@ export interface VendorStore {
     maxConcurrentOrders?: number;
   };
   supportedFlows?: string[];
+  internalCode?: string;
   assignmentZones?: string[];
-  isActive: boolean;
-  isAvailable: boolean;
-  availabilityReason?: string;
-  createdAt?: string;
-  updatedAt?: string;
+}
+
+// PUT /api/vendor/stores/:id/capacity — flat fields (not nested under "capacity")
+export interface UpdateStoreCapacityPayload {
+  maxOrdersPerDay?: number;
+  currentLoad?: number;
+  dailyLimit?: number;
+  maxConcurrentOrders?: number;
+}
+
+// GET /api/vendor/stores/:id/capabilities
+// Note: maxOrdersPerDay & currentLoad come from store top-level field, not capacity.*
+export interface StoreCapabilities {
+  supportedFlows: string[];
+  maxOrdersPerDay: number;  // from store.maxOrdersPerDay (top-level), 0 if not set
+  currentLoad: number;      // from store.currentLoad (top-level), 0 if not set
+}
+
+// GET /api/vendor/stores/nearby — public endpoint
+export interface NearbyStore {
+  _id: string;
+  name: string;
+  address: {
+    line1: string;
+    line2?: string;
+    city: string;
+    state: string;
+    pincode: string;
+  };
+  location: { lat: number; lng: number };
+  workingHours?: string;
+  supportedFlows?: string[];
+  capacity?: {
+    maxOrdersPerDay?: number;
+    currentLoad?: number;
+    dailyLimit?: number;
+    maxConcurrentOrders?: number;
+  };
+  distance: number;  // meters, from MongoDB $geoNear
+}
+
+export interface NearbyStoresResponse {
+  stores: NearbyStore[];
+  totalFound: number;
+  searchLocation: { lat: number; lng: number };
+  searchRadius: number;
 }
 
 export interface VendorStaff {

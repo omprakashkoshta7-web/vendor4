@@ -10,6 +10,10 @@ import type {
   VendorProfile,
   VendorStaff,
   VendorStore,
+  CreateStorePayload,
+  UpdateStoreCapacityPayload,
+  StoreCapabilities,
+  NearbyStoresResponse,
   SupportSummaryResponse,
   SupportTicket,
   SupportTicketListResponse,
@@ -139,21 +143,19 @@ export async function getVendorOrgAgreement() {
 // STORES APIs
 // ============================================
 
-export async function getNearbyStores(params?: {
-  lat?: number;
-  lng?: number;
+export async function getNearbyStores(params: {
+  lat: number;
+  lng: number;
   radius?: number;
   limit?: number;
-  pincode?: string;
 }) {
   const query = new URLSearchParams();
-  if (params?.lat) query.set("lat", params.lat.toString());
-  if (params?.lng) query.set("lng", params.lng.toString());
-  if (params?.radius) query.set("radius", params.radius.toString());
-  if (params?.limit) query.set("limit", params.limit.toString());
-  if (params?.pincode) query.set("pincode", params.pincode);
-  
-  return apiRequest<ApiEnvelope<VendorStore[]>>(
+  query.set("lat", params.lat.toString());
+  query.set("lng", params.lng.toString());
+  if (params.radius != null) query.set("radius", params.radius.toString());
+  if (params.limit  != null) query.set("limit",  params.limit.toString());
+
+  return apiRequest<ApiEnvelope<NearbyStoresResponse>>(
     `${API_ENDPOINTS.vendor.storesNearby}?${query.toString()}`
   );
 }
@@ -166,14 +168,14 @@ export async function getVendorStore(id: string) {
   return apiRequest<ApiEnvelope<VendorStore>>(API_ENDPOINTS.vendor.storeById(id));
 }
 
-export async function createVendorStore(payload: Partial<VendorStore>) {
+export async function createVendorStore(payload: CreateStorePayload) {
   return apiRequest<ApiEnvelope<VendorStore>>(API_ENDPOINTS.vendor.stores, {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
-export async function updateVendorStore(id: string, payload: Partial<VendorStore>) {
+export async function updateVendorStore(id: string, payload: Partial<Omit<VendorStore, "_id" | "vendorId" | "userId" | "createdAt" | "updatedAt" | "deletedAt">>) {
   return apiRequest<ApiEnvelope<VendorStore>>(API_ENDPOINTS.vendor.storeById(id), {
     method: "PUT",
     body: JSON.stringify(payload),
@@ -187,34 +189,26 @@ export async function updateVendorStoreStatus(id: string, isActive: boolean) {
   });
 }
 
-export async function updateVendorStoreAvailability(id: string, isAvailable: boolean, reason?: string) {
+// availabilityReason is auto-set by backend:
+//   isAvailable: false → "Marked unavailable by vendor"
+//   isAvailable: true  → reason cleared
+export async function updateVendorStoreAvailability(id: string, isAvailable: boolean) {
   return apiRequest<ApiEnvelope<VendorStore>>(API_ENDPOINTS.vendor.storeAvailability(id), {
     method: "PATCH",
-    body: JSON.stringify({ isAvailable, ...(reason && { availabilityReason: reason }) }),
+    body: JSON.stringify({ isAvailable }),
   });
 }
 
-export async function updateVendorStoreCapacity(
-  id: string,
-  capacity: {
-    maxOrdersPerDay?: number;
-    currentLoad?: number;
-    dailyLimit?: number;
-    maxConcurrentOrders?: number;
-  }
-) {
+// Backend expects flat fields directly, NOT nested under "capacity"
+export async function updateVendorStoreCapacity(id: string, payload: UpdateStoreCapacityPayload) {
   return apiRequest<ApiEnvelope<VendorStore>>(API_ENDPOINTS.vendor.storeCapacity(id), {
     method: "PUT",
-    body: JSON.stringify({ capacity }),
+    body: JSON.stringify(payload),
   });
 }
 
 export async function getStoreCapabilities(id: string) {
-  return apiRequest<ApiEnvelope<{
-    supportedFlows: string[];
-    maxOrdersPerDay: number;
-    currentLoad: number;
-  }>>(API_ENDPOINTS.vendor.storeCapabilities(id));
+  return apiRequest<ApiEnvelope<StoreCapabilities>>(API_ENDPOINTS.vendor.storeCapabilities(id));
 }
 
 // ============================================

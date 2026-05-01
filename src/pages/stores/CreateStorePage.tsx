@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Save, Store, MapPin, Phone, Mail, Clock, Package } from "lucide-react";
 import { COLORS } from "../../utils/colors";
 import { createVendorStore } from "../../services/vendor.service";
+import type { CreateStorePayload } from "../../types/vendor";
 
 const FLOWS = ["printing", "gifting", "shopping"] as const;
 
@@ -61,12 +62,17 @@ export default function CreateStorePage() {
     setSaving(true);
     setError("");
     try {
-      const res = await createVendorStore({
+      const payload: CreateStorePayload = {
         name: form.name,
-        internalCode: form.internalCode || undefined,
-        address: { line1: form.line1, city: form.city, state: form.state, pincode: form.pincode },
-        phone: form.phone || undefined,
-        email: form.email || undefined,
+        ...(form.internalCode && { internalCode: form.internalCode }),
+        address: {
+          line1: form.line1,
+          city: form.city,
+          state: form.state,
+          pincode: form.pincode,
+        },
+        ...(form.phone && { phone: form.phone }),
+        ...(form.email && { email: form.email }),
         workingHours: form.workingHours,
         supportedFlows: form.flows,
         capacity: {
@@ -75,11 +81,11 @@ export default function CreateStorePage() {
           maxConcurrentOrders: Number(form.maxConcurrentOrders) || 10,
           currentLoad: 0,
         },
-        location: {
-          lat: form.lat ? Number(form.lat) : undefined,
-          lng: form.lng ? Number(form.lng) : undefined,
-        },
-      });
+        ...(form.lat && form.lng && {
+          location: { lat: Number(form.lat), lng: Number(form.lng) },
+        }),
+      };
+      const res = await createVendorStore(payload);
       navigate(`/stores/${res.data._id}`, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create store");
