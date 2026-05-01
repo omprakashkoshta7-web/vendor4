@@ -1,6 +1,6 @@
 import { API_ENDPOINTS } from "../config/api";
 import { apiRequest, ApiError, getAuthToken } from "./api";
-import { API_BASE_URL } from "../config/api";
+import { API_BASE_URL, FINANCE_BASE_URL } from "../config/api";
 import type {
   ApiEnvelope,
   AuthUser,
@@ -462,16 +462,39 @@ export async function getVendorPayoutHistory() {
 
 // ============================================
 // FINANCE SERVICE GATEWAY APIs — /api/finance/vendor/finance/*
+// Uses FINANCE_BASE_URL (separate gateway: VITE_FINANCE_API_URL)
 // ============================================
 
+async function financeRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const token = getAuthToken();
+  const headers = new Headers(init.headers || {});
+  if (!headers.has("Content-Type") && init.body) headers.set("Content-Type", "application/json");
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+
+  const fullUrl = `${FINANCE_BASE_URL}${path}`;
+  console.log(`🌐 Finance API Request: ${init.method || "GET"} ${fullUrl}`);
+
+  const response = await fetch(fullUrl, { ...init, headers });
+  const payload = await response.json().catch(() => null);
+  console.log(`📡 Finance API Response [${response.status}]:`, path, payload);
+
+  if (!response.ok) {
+    const message = payload?.message || `HTTP ${response.status}: ${response.statusText}`;
+    console.error(`❌ Finance API Error [${response.status}]:`, path, message);
+    throw new ApiError(message, response.status);
+  }
+  if (payload == null) throw new ApiError("Empty or invalid server response", response.status || 500);
+  return payload as T;
+}
+
 export async function getVendorFinanceServiceSummary() {
-  return apiRequest<ApiEnvelope<VendorFinanceSummaryResponse>>(
+  return financeRequest<ApiEnvelope<VendorFinanceSummaryResponse>>(
     API_ENDPOINTS.vendor.financeServiceSummary
   );
 }
 
 export async function getVendorFinanceServicePayoutHistory(page = 1, limit = 10) {
-  return apiRequest<ApiEnvelope<VendorFinancePayoutHistoryResponse>>(
+  return financeRequest<ApiEnvelope<VendorFinancePayoutHistoryResponse>>(
     `${API_ENDPOINTS.vendor.financeServicePayoutHistory}?page=${page}&limit=${limit}`
   );
 }
