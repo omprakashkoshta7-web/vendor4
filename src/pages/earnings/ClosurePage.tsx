@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Download, RefreshCw, AlertTriangle, Briefcase, CheckCircle, DollarSign, TrendingUp, ShoppingCart } from "lucide-react";
+import { Download, RefreshCw, AlertTriangle, Briefcase, DollarSign, TrendingUp, ShoppingCart } from "lucide-react";
 import LoadingState from "../../components/ui/LoadingState";
 import { COLORS } from "../../utils/colors";
 import {
