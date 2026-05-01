@@ -32,12 +32,28 @@ export default function PayoutsPage() {
     try {
       setLoading(true);
       setError("");
-      const [scheduleRes, historyRes] = await Promise.all([
+      const [scheduleRes, historyRes] = await Promise.allSettled([
         getVendorPayoutsSchedule(),
         getVendorPayoutHistory(),
       ]);
-      setSchedule(scheduleRes.data);
-      setPayouts(historyRes.data?.payouts || []);
+
+      if (scheduleRes.status === "fulfilled") {
+        setSchedule(scheduleRes.value.data);
+      } else {
+        console.error("❌ Payout Schedule Error:", scheduleRes.reason);
+      }
+
+      if (historyRes.status === "fulfilled") {
+        setPayouts(historyRes.value.data?.payouts || []);
+      } else {
+        console.error("❌ Payout History Error:", historyRes.reason);
+      }
+
+      const allFailed = scheduleRes.status === "rejected" && historyRes.status === "rejected";
+      if (allFailed) {
+        const err = (scheduleRes as PromiseRejectedResult).reason;
+        setError(err instanceof Error ? err.message : "Failed to load payouts");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load payouts");
     } finally {

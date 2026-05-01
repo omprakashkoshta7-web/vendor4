@@ -54,6 +54,7 @@ export default function StoreDetailPage() {
   const [form, setForm] = useState({
     name: "", workingHours: "", phone: "", email: "",
     maxOrdersPerDay: "0", currentLoad: "0", dailyLimit: "0", maxConcurrentOrders: "10",
+    lat: "", lng: "",
   });
 
   // API 2: GET /api/vendor/stores/:id

@@ -26,48 +26,44 @@ export default function EarningsPage() {
     try {
       setLoading(true);
       setError("");
-      
-      console.log("🔍 [Finance Debug] Starting API calls...");
-      
-      const [walletRes, storeWiseRes, deductionsRes, storesRes] = await Promise.all([
-        getVendorWalletSummary().then(res => {
-          console.log("✅ Wallet Summary Response:", res);
-          return res;
-        }).catch(err => {
-          console.error("❌ Wallet Summary Error:", err);
-          throw err;
-        }),
-        getVendorWalletStoreWise().then(res => {
-          console.log("✅ Store-wise Response:", res);
-          return res;
-        }).catch(err => {
-          console.error("❌ Store-wise Error:", err);
-          throw err;
-        }),
-        getVendorWalletDeductions().then(res => {
-          console.log("✅ Deductions Response:", res);
-          return res;
-        }).catch(err => {
-          console.error("❌ Deductions Error:", err);
-          throw err;
-        }),
-        getVendorStores().then(res => {
-          console.log("✅ Stores Response:", res);
-          return res;
-        }).catch(err => {
-          console.error("❌ Stores Error:", err);
-          throw err;
-        }),
+
+      const [walletRes, storeWiseRes, deductionsRes, storesRes] = await Promise.allSettled([
+        getVendorWalletSummary(),
+        getVendorWalletStoreWise(),
+        getVendorWalletDeductions(),
+        getVendorStores(),
       ]);
-      
-      console.log("📊 [Finance Debug] Wallet Data:", walletRes.data);
-      console.log("📊 [Finance Debug] Store-wise Data:", storeWiseRes.data);
-      console.log("📊 [Finance Debug] Deductions Data:", deductionsRes.data);
-      
-      setWallet(walletRes.data);
-      setStoreWise(Array.isArray(storeWiseRes.data) ? storeWiseRes.data : []);
-      setDeductions(deductionsRes.data?.deductions || []);
-      setStores(storesRes.data || []);
+
+      if (walletRes.status === "fulfilled") {
+        setWallet(walletRes.value.data);
+      } else {
+        console.error("❌ Wallet Summary Error:", walletRes.reason);
+      }
+
+      if (storeWiseRes.status === "fulfilled") {
+        setStoreWise(Array.isArray(storeWiseRes.value.data) ? storeWiseRes.value.data : []);
+      } else {
+        console.error("❌ Store-wise Error:", storeWiseRes.reason);
+      }
+
+      if (deductionsRes.status === "fulfilled") {
+        setDeductions(deductionsRes.value.data?.deductions || []);
+      } else {
+        console.error("❌ Deductions Error:", deductionsRes.reason);
+      }
+
+      if (storesRes.status === "fulfilled") {
+        setStores(storesRes.value.data || []);
+      } else {
+        console.error("❌ Stores Error:", storesRes.reason);
+      }
+
+      // Show error only if ALL calls failed
+      const allFailed = [walletRes, storeWiseRes, deductionsRes, storesRes].every(r => r.status === "rejected");
+      if (allFailed) {
+        const firstErr = (walletRes as PromiseRejectedResult).reason;
+        setError(firstErr instanceof Error ? firstErr.message : "Failed to load earnings");
+      }
     } catch (err) {
       console.error("❌ [Finance Debug] Load Error:", err);
       setError(err instanceof Error ? err.message : "Failed to load earnings");
@@ -123,7 +119,7 @@ export default function EarningsPage() {
           value={`₹${(wallet?.balance || 0).toLocaleString()}`} 
           accent={COLORS.primary} 
           accentBg={`${COLORS.primary}18`} 
-          note={`Currency: ${wallet?.currency || "INR"}`} 
+          note="Sum of all delivered orders" 
           icon={DollarSign} 
         />
         <VendorMetricCard 
