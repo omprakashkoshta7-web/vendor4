@@ -73,6 +73,8 @@ export default function StoreDetailPage() {
         currentLoad: String(res.data.capacity?.currentLoad || 0),
         dailyLimit: String(res.data.capacity?.dailyLimit || res.data.capacity?.maxOrdersPerDay || 0),
         maxConcurrentOrders: String(res.data.capacity?.maxConcurrentOrders || 10),
+        lat: res.data.location?.lat != null ? String(res.data.location.lat) : "",
+        lng: res.data.location?.lng != null ? String(res.data.location.lng) : "",
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load store");
