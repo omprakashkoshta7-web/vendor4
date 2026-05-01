@@ -13,6 +13,15 @@ import type {
   SupportSummaryResponse,
   SupportTicket,
   SupportTicketListResponse,
+  VendorWalletSummary,
+  VendorStoreWiseEarnings,
+  VendorWalletDeductionsResponse,
+  VendorClosure,
+  VendorPayoutSchedule,
+  VendorPayoutHistory,
+  VendorFinanceSummaryResponse,
+  VendorFinancePayoutHistoryResponse,
+  VendorPerformanceScore,
 } from "../types/vendor";
 
 export const OWNER_PERMISSIONS = [
@@ -105,6 +114,25 @@ export async function uploadLegalDocs(payload: any) {
 
 export async function getAgreement() {
   return apiRequest<ApiEnvelope<any>>(API_ENDPOINTS.vendor.agreement);
+}
+
+// ============================================
+// VENDOR-ORG APIs (alternate org routes)
+// ============================================
+
+export async function getVendorOrgLegal() {
+  return apiRequest<ApiEnvelope<any>>(API_ENDPOINTS.vendor.vendorOrgLegal);
+}
+
+export async function uploadVendorOrgLegal(payload: any) {
+  return apiRequest<ApiEnvelope<any>>(API_ENDPOINTS.vendor.vendorOrgLegal, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getVendorOrgAgreement() {
+  return apiRequest<ApiEnvelope<any>>(API_ENDPOINTS.vendor.vendorOrgAgreement);
 }
 
 // ============================================
@@ -388,30 +416,15 @@ export async function getVendorPerformance() {
 // ============================================
 
 export async function getVendorWalletSummary() {
-  return apiRequest<ApiEnvelope<{
-    _id: string;
-    userId: string;
-    userType: string;
-    balance: number;
-    currency: string;
-    isActive: boolean;
-    pendingSettlement?: number;
-    availableForWithdrawal?: number;
-    createdAt: string;
-    updatedAt: string;
-  }>>(API_ENDPOINTS.vendor.walletSummary);
+  return apiRequest<ApiEnvelope<VendorWalletSummary>>(API_ENDPOINTS.vendor.walletSummary);
 }
 
 export async function getVendorWalletStoreWise() {
-  return apiRequest<ApiEnvelope<Array<{
-    _id: string;
-    earnings: number;
-    orderCount: number;
-  }>>>(API_ENDPOINTS.vendor.walletStoreWise);
+  return apiRequest<ApiEnvelope<VendorStoreWiseEarnings[]>>(API_ENDPOINTS.vendor.walletStoreWise);
 }
 
 export async function getVendorWalletDeductions() {
-  return apiRequest<ApiEnvelope<{ deductions: any[] }>>(
+  return apiRequest<ApiEnvelope<VendorWalletDeductionsResponse>>(
     API_ENDPOINTS.vendor.walletDeductions
   );
 }
@@ -422,45 +435,23 @@ export async function getVendorWalletDeductions() {
 
 export async function getVendorClosureDaily(date?: string) {
   const query = date ? `?date=${date}` : "";
-  return apiRequest<ApiEnvelope<{
-    period: string;
-    date: string;
-    earnings: number;
-    count: number;
-    totalEarnings?: number;
-    totalOrders?: number;
-    breakdown?: any;
-  }>>(`${API_ENDPOINTS.vendor.closureDaily}${query}`);
+  return apiRequest<ApiEnvelope<VendorClosure>>(
+    `${API_ENDPOINTS.vendor.closureDaily}${query}`
+  );
 }
 
 export async function getVendorClosureWeekly(date?: string) {
   const query = date ? `?date=${date}` : "";
-  return apiRequest<ApiEnvelope<{
-    period: string;
-    weekStart: string;
-    weekEnd: string;
-    earnings?: number;
-    count?: number;
-    totalEarnings?: number;
-    totalOrders?: number;
-    dailyBreakdown?: any[];
-    stats?: any;
-  }>>(`${API_ENDPOINTS.vendor.closureWeekly}${query}`);
+  return apiRequest<ApiEnvelope<VendorClosure>>(
+    `${API_ENDPOINTS.vendor.closureWeekly}${query}`
+  );
 }
 
 export async function getVendorClosureMonthly(date?: string) {
   const query = date ? `?date=${date}` : "";
-  return apiRequest<ApiEnvelope<{
-    period: string;
-    month: string;
-    earnings?: number;
-    count?: number;
-    totalEarnings?: number;
-    totalOrders?: number;
-    weeklyBreakdown?: any[];
-    categoryWise?: any;
-    stats?: any;
-  }>>(`${API_ENDPOINTS.vendor.closureMonthly}${query}`);
+  return apiRequest<ApiEnvelope<VendorClosure>>(
+    `${API_ENDPOINTS.vendor.closureMonthly}${query}`
+  );
 }
 
 // ============================================
@@ -468,56 +459,27 @@ export async function getVendorClosureMonthly(date?: string) {
 // ============================================
 
 export async function getVendorPayoutsSchedule() {
-  return apiRequest<ApiEnvelope<{
-    nextPayoutDate: string;
-    estimatedAmount: number;
-    lastPayoutDate: string;
-    lastPayoutAmount: number;
-    payoutFrequency: string;
-    payoutMethod: string;
-    bankAccount: {
-      accountName: string;
-      accountNumber: string;
-      ifscCode: string;
-      bankName: string;
-    };
-    estimatedDeductions: {
-      platformFee: number;
-      gst: number;
-      other: number;
-    };
-    estimatedNetAmount: number;
-  }>>(API_ENDPOINTS.vendor.payoutsSchedule);
+  return apiRequest<ApiEnvelope<VendorPayoutSchedule>>(API_ENDPOINTS.vendor.payoutsSchedule);
 }
 
 export async function getVendorPayoutHistory() {
-  return apiRequest<ApiEnvelope<{
-    payouts: Array<{
-      _id: string;
-      vendorId: string;
-      payoutDate: string;
-      amount: number;
-      status: "paid" | "pending" | "processing" | "failed";
-      transactionId: string;
-      bankAccount: string;
-      ordersIncluded: number;
-      periodStart: string;
-      periodEnd: string;
-      breakdown: {
-        grossAmount: number;
-        platformFee: number;
-        gst: number;
-        netAmount: number;
-      };
-      paidAt: string;
-    }>;
-    summary: {
-      totalPayouts: number;
-      totalAmount: number;
-      avgPayoutAmount: number;
-      lastPayoutDate: string;
-    };
-  }>>(API_ENDPOINTS.vendor.payoutsHistory);
+  return apiRequest<ApiEnvelope<VendorPayoutHistory>>(API_ENDPOINTS.vendor.payoutsHistory);
+}
+
+// ============================================
+// FINANCE SERVICE GATEWAY APIs — /api/finance/vendor/finance/*
+// ============================================
+
+export async function getVendorFinanceServiceSummary() {
+  return apiRequest<ApiEnvelope<VendorFinanceSummaryResponse>>(
+    API_ENDPOINTS.vendor.financeServiceSummary
+  );
+}
+
+export async function getVendorFinanceServicePayoutHistory(page = 1, limit = 10) {
+  return apiRequest<ApiEnvelope<VendorFinancePayoutHistoryResponse>>(
+    `${API_ENDPOINTS.vendor.financeServicePayoutHistory}?page=${page}&limit=${limit}`
+  );
 }
 
 // ============================================
@@ -525,15 +487,11 @@ export async function getVendorPayoutHistory() {
 // ============================================
 
 export async function getVendorRejectionsHistory() {
-  return apiRequest<ApiEnvelope<any[]>>(API_ENDPOINTS.vendor.rejectionsHistory);
+  return apiRequest<ApiEnvelope<VendorOrder[]>>(API_ENDPOINTS.vendor.rejectionsHistory);
 }
 
 export async function getVendorPerformanceScore() {
-  return apiRequest<ApiEnvelope<{
-    acceptanceRate: number;
-    completionRate: number;
-    overallScore: number;
-  }>>(API_ENDPOINTS.vendor.performanceScore);
+  return apiRequest<ApiEnvelope<VendorPerformanceScore>>(API_ENDPOINTS.vendor.performanceScore);
 }
 
 // ============================================
@@ -574,6 +532,116 @@ export async function createSupportTicket(payload: {
 export async function replySupportTicket(id: string, message: string) {
   return apiRequest<ApiEnvelope<SupportTicket>>(
     API_ENDPOINTS.vendor.supportTicketReply(id),
+    {
+      method: "POST",
+      body: JSON.stringify({ message }),
+    }
+  );
+}
+
+// ============================================
+// FINANCE ALIAS APIs — /vendor/wallet/*, /vendor/closure/*, /vendor/payouts/*
+// These are alternate paths that mirror the /vendor/finance/* routes
+// ============================================
+
+export async function getVendorWalletSummaryAlias() {
+  return apiRequest<ApiEnvelope<VendorWalletSummary>>(API_ENDPOINTS.vendor.walletSummaryAlias);
+}
+
+export async function getVendorWalletStoreWiseAlias() {
+  return apiRequest<ApiEnvelope<VendorStoreWiseEarnings[]>>(API_ENDPOINTS.vendor.walletStoreWiseAlias);
+}
+
+export async function getVendorWalletDeductionsAlias() {
+  return apiRequest<ApiEnvelope<VendorWalletDeductionsResponse>>(
+    API_ENDPOINTS.vendor.walletDeductionsAlias
+  );
+}
+
+export async function getVendorClosureDailyAlias(date?: string) {
+  const query = date ? `?date=${date}` : "";
+  return apiRequest<ApiEnvelope<VendorClosure>>(
+    `${API_ENDPOINTS.vendor.closureDailyAlias}${query}`
+  );
+}
+
+export async function getVendorClosureWeeklyAlias(date?: string) {
+  const query = date ? `?date=${date}` : "";
+  return apiRequest<ApiEnvelope<VendorClosure>>(
+    `${API_ENDPOINTS.vendor.closureWeeklyAlias}${query}`
+  );
+}
+
+export async function getVendorClosureMonthlyAlias(date?: string) {
+  const query = date ? `?date=${date}` : "";
+  return apiRequest<ApiEnvelope<VendorClosure>>(
+    `${API_ENDPOINTS.vendor.closureMonthlyAlias}${query}`
+  );
+}
+
+export async function getVendorPayoutsScheduleAlias() {
+  return apiRequest<ApiEnvelope<VendorPayoutSchedule>>(API_ENDPOINTS.vendor.payoutsScheduleAlias);
+}
+
+export async function getVendorPayoutHistoryAlias() {
+  return apiRequest<ApiEnvelope<VendorPayoutHistory>>(API_ENDPOINTS.vendor.payoutsHistoryAlias);
+}
+
+// ============================================
+// SCORING ALIAS APIs — /vendor/rejections/history, /vendor/performance-score
+// ============================================
+
+export async function getVendorRejectionsHistoryAlias() {
+  return apiRequest<ApiEnvelope<VendorOrder[]>>(API_ENDPOINTS.vendor.rejectionsHistoryAlias);
+}
+
+export async function getVendorPerformanceScoreAlias() {
+  return apiRequest<ApiEnvelope<VendorPerformanceScore>>(API_ENDPOINTS.vendor.performanceScoreAlias);
+}
+
+export async function getVendorPerformanceScoreVendorAlias() {
+  return apiRequest<ApiEnvelope<VendorPerformanceScore>>(API_ENDPOINTS.vendor.performanceScoreVendorAlias);
+}
+
+// ============================================
+// SUPPORT TICKET ALIAS APIs — /vendor/tickets/*
+// These mirror /vendor/support/tickets/* routes
+// ============================================
+
+export async function getTickets(status?: string) {
+  const query = status && status !== "all" ? `?status=${encodeURIComponent(status)}` : "";
+  return apiRequest<ApiEnvelope<SupportTicketListResponse>>(
+    `${API_ENDPOINTS.vendor.tickets}${query}`
+  );
+}
+
+export async function getTicketsSummary() {
+  return apiRequest<ApiEnvelope<SupportSummaryResponse>>(
+    API_ENDPOINTS.vendor.ticketSummary
+  );
+}
+
+export async function getTicket(id: string) {
+  return apiRequest<ApiEnvelope<SupportTicket>>(
+    API_ENDPOINTS.vendor.ticketById(id)
+  );
+}
+
+export async function createTicket(payload: {
+  subject: string;
+  description: string;
+  category?: string;
+  orderId?: string;
+}) {
+  return apiRequest<ApiEnvelope<SupportTicket>>(API_ENDPOINTS.vendor.tickets, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function replyTicket(id: string, message: string) {
+  return apiRequest<ApiEnvelope<SupportTicket>>(
+    API_ENDPOINTS.vendor.ticketReply(id),
     {
       method: "POST",
       body: JSON.stringify({ message }),

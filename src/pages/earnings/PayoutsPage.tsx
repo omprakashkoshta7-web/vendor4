@@ -9,7 +9,7 @@ import {
   getVendorPayoutsSchedule,
   getVendorPayoutHistory,
 } from "../../services/vendor.service";
-import type { VendorPayout } from "../../types/vendor";
+import type { VendorPayoutRecord, VendorPayoutSchedule } from "../../types/vendor";
 import VendorMetricCard from "../../components/ui/VendorMetricCard";
 
 const STATUS_STYLE: Record<string, { color: string; bg: string; border: string }> = {
@@ -20,14 +20,14 @@ const STATUS_STYLE: Record<string, { color: string; bg: string; border: string }
 };
 
 export default function PayoutsPage() {
-  const [schedule, setSchedule] = useState<any>(null);
-  const [payouts, setPayouts] = useState<VendorPayout[]>([]);
+  const [schedule, setSchedule] = useState<VendorPayoutSchedule | null>(null);
+  const [payouts, setPayouts] = useState<VendorPayoutRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState<"all" | "paid" | "pending" | "processing" | "failed">("all");
 
-  // API 7: GET /finance/payouts/schedule
-  // API 8: GET /finance/payouts/history
+  // API 7: GET /vendor/finance/payouts/schedule
+  // API 8: GET /vendor/finance/payouts/history
   const loadData = async () => {
     try {
       setLoading(true);
@@ -37,7 +37,7 @@ export default function PayoutsPage() {
         getVendorPayoutHistory(),
       ]);
       setSchedule(scheduleRes.data);
-      setPayouts((historyRes.data as any)?.payouts || []);
+      setPayouts(historyRes.data?.payouts || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load payouts");
     } finally {
@@ -52,19 +52,29 @@ export default function PayoutsPage() {
     [filter, payouts]
   );
 
+  // amount = net amount (after platform fee)
   const stats = useMemo(() => ({
-    totalPaid: payouts.filter(p => p.status === "paid").reduce((s, p) => s + (p.breakdown?.netAmount ?? p.amount ?? 0), 0),
-    pending: payouts.filter(p => p.status === "pending").reduce((s, p) => s + (p.breakdown?.netAmount ?? p.amount ?? 0), 0),
+    totalPaid:  payouts.filter(p => p.status === "paid").reduce((s, p) => s + (p.amount ?? 0), 0),
+    pending:    payouts.filter(p => p.status === "pending").reduce((s, p) => s + (p.amount ?? 0), 0),
     totalCount: payouts.length,
-    avgPayout: payouts.length ? Math.round(payouts.reduce((s, p) => s + (p.breakdown?.netAmount ?? p.amount ?? 0), 0) / payouts.length) : 0,
+    avgPayout:  payouts.length
+      ? Math.round(payouts.reduce((s, p) => s + (p.amount ?? 0), 0) / payouts.length)
+      : 0,
   }), [payouts]);
 
   const exportHistory = () => {
     const csv = [
-      ["Date", "Gross", "Fee", "Net", "Status", "Transfer ID"].join(","),
+      ["Date", "Gross", "Platform Fee", "Net", "Status", "Transfer ID", "Period Start", "Period End", "Notes"].join(","),
       ...payouts.map(p => [
         p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "—",
-        p.amount, p.platformFee, p.netAmount, p.status, p.transferId || "—"
+        p.grossAmount ?? "",
+        p.platformFee ?? "",
+        p.amount ?? "",
+        p.status,
+        p.transferId || "—",
+        p.periodStart ? new Date(p.periodStart).toLocaleDateString() : "—",
+        p.periodEnd   ? new Date(p.periodEnd).toLocaleDateString()   : "—",
+        `"${p.notes || ""}"`,
       ].join(","))
     ].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -107,10 +117,14 @@ export default function PayoutsPage() {
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <VendorMetricCard index={0} label="Total Paid Out" value={`₹${stats.totalPaid.toLocaleString()}`} accent={COLORS.success} accentBg={COLORS.successBg} note="Settled payouts" icon={DollarSign} />
-        <VendorMetricCard index={1} label="Pending Amount" value={`₹${stats.pending.toLocaleString()}`} accent={COLORS.warning} accentBg={COLORS.warningBg} note="Awaiting processing" icon={Clock} />
-        <VendorMetricCard index={2} label="Avg Payout" value={`₹${stats.avgPayout.toLocaleString()}`} accent={COLORS.info} accentBg={COLORS.infoBg} note={`${stats.totalCount} total records`} icon={TrendingUp} />
-        <VendorMetricCard index={3} label="Next Payout" value={schedule?.nextPayoutDate ? new Date(schedule.nextPayoutDate).toLocaleDateString() : "Not scheduled"} accent={COLORS.primary} accentBg={`${COLORS.primary}18`} note={schedule?.estimatedAmount ? `₹${schedule.estimatedAmount.toLocaleString()} est.` : "No estimate"} icon={Calendar} />
+        <VendorMetricCard index={0} label="Total Paid Out"  value={`₹${stats.totalPaid.toLocaleString()}`}  accent={COLORS.success} accentBg={COLORS.successBg} note="Settled payouts"      icon={DollarSign} />
+        <VendorMetricCard index={1} label="Pending Amount"  value={`₹${stats.pending.toLocaleString()}`}    accent={COLORS.warning} accentBg={COLORS.warningBg} note="Awaiting processing"  icon={Clock} />
+        <VendorMetricCard index={2} label="Avg Payout"      value={`₹${stats.avgPayout.toLocaleString()}`}  accent={COLORS.info}    accentBg={COLORS.infoBg}    note={`${stats.totalCount} total records`} icon={TrendingUp} />
+        <VendorMetricCard index={3} label="Next Payout"
+          value={schedule?.nextPayoutDate ? new Date(schedule.nextPayoutDate).toLocaleDateString() : "Not scheduled"}
+          accent={COLORS.primary} accentBg={`${COLORS.primary}18`}
+          note={schedule?.estimatedAmount ? `₹${schedule.estimatedAmount.toLocaleString()} est.` : "No estimate"}
+          icon={Calendar} />
       </div>
 
       {/* API 7: Next Payout Schedule Card */}
@@ -129,6 +143,11 @@ export default function PayoutsPage() {
                   ? `Scheduled for ${new Date(schedule.nextPayoutDate).toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}`
                   : "No upcoming payout scheduled"}
               </p>
+              {schedule.status && (
+                <p className="text-xs mt-0.5 capitalize font-semibold" style={{ color: COLORS.info }}>
+                  Status: {schedule.status}
+                </p>
+              )}
             </div>
             {schedule.estimatedAmount > 0 && (
               <div className="text-right">
@@ -159,8 +178,10 @@ export default function PayoutsPage() {
           <div className="card-list space-y-3 pr-1">
             {filteredPayouts.map(payout => {
               const sc = STATUS_STYLE[payout.status] || STATUS_STYLE.pending;
+              // id field from backend (mapped from _id)
+              const key = payout.id || (payout as any)._id || Math.random().toString();
               return (
-                <div key={payout._id} className="rounded-xl border border-gray-200 p-4 hover:bg-gray-50 transition">
+                <div key={key} className="rounded-xl border border-gray-200 p-4 hover:bg-gray-50 transition">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -171,9 +192,12 @@ export default function PayoutsPage() {
                         }
                       </div>
                       <div>
-                        <p className="text-base font-black text-gray-900">₹{payout.breakdown?.netAmount?.toLocaleString() || payout.amount?.toLocaleString()}</p>
+                        {/* amount = net amount after platform fee */}
+                        <p className="text-base font-black text-gray-900">₹{(payout.amount ?? 0).toLocaleString()}</p>
                         <p className="text-xs text-gray-500 mt-0.5">
-                          {payout.payoutDate ? new Date(payout.payoutDate).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"}
+                          {payout.createdAt
+                            ? new Date(payout.createdAt).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+                            : "—"}
                         </p>
                       </div>
                     </div>
@@ -185,14 +209,14 @@ export default function PayoutsPage() {
 
                   {/* Details row */}
                   <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-500">
-                    <span>Gross: <span className="font-semibold text-gray-700">₹{payout.breakdown?.grossAmount?.toLocaleString() || payout.amount?.toLocaleString()}</span></span>
-                    <span>Platform Fee: <span className="font-semibold text-gray-700">₹{payout.breakdown?.platformFee?.toLocaleString() || 0}</span></span>
-                    <span>GST: <span className="font-semibold text-gray-700">₹{payout.breakdown?.gst?.toLocaleString() || 0}</span></span>
-                    {payout.ordersIncluded && (
-                      <span>{payout.ordersIncluded} orders included</span>
+                    <span>Gross: <span className="font-semibold text-gray-700">₹{(payout.grossAmount ?? 0).toLocaleString()}</span></span>
+                    <span>Platform Fee: <span className="font-semibold text-gray-700">₹{(payout.platformFee ?? 0).toLocaleString()}</span></span>
+                    <span>Net: <span className="font-semibold text-gray-700">₹{(payout.amount ?? 0).toLocaleString()}</span></span>
+                    {payout.transferId && (
+                      <span>Transfer: <span className="font-mono text-gray-700">{payout.transferId}</span></span>
                     )}
-                    {payout.transactionId && (
-                      <span>TXN: <span className="font-mono text-gray-700">{payout.transactionId}</span></span>
+                    {payout.transferredAt && (
+                      <span>Transferred: <span className="font-semibold text-gray-700">{new Date(payout.transferredAt).toLocaleDateString()}</span></span>
                     )}
                     {payout.periodStart && payout.periodEnd && (
                       <span>
@@ -201,10 +225,10 @@ export default function PayoutsPage() {
                     )}
                   </div>
 
-                  {/* Bank Account */}
-                  {payout.bankAccount && (
+                  {/* Notes */}
+                  {payout.notes && (
                     <div className="mt-2 p-2 rounded-lg bg-gray-50 text-xs text-gray-600">
-                      Bank: {payout.bankAccount}
+                      {payout.notes}
                     </div>
                   )}
                 </div>

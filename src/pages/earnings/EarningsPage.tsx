@@ -66,7 +66,7 @@ export default function EarningsPage() {
       
       setWallet(walletRes.data);
       setStoreWise(Array.isArray(storeWiseRes.data) ? storeWiseRes.data : []);
-      setDeductions((deductionsRes.data as any)?.deductions || []);
+      setDeductions(deductionsRes.data?.deductions || []);
       setStores(storesRes.data || []);
     } catch (err) {
       console.error("❌ [Finance Debug] Load Error:", err);
@@ -229,20 +229,20 @@ export default function EarningsPage() {
           <div className="scroll-card-body pr-1">
             {deductions.length > 0 ? (
               <div className="space-y-3">
-                {deductions.map((d: any) => (
-                  <div key={d._id} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200">
+                {deductions.map((d: any, i: number) => (
+                  <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200">
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">{d.description || d.category}</p>
+                      <p className="text-sm font-semibold text-gray-900 capitalize">
+                        {d.type?.replace(/_/g, " ") || "Platform Fee"}
+                      </p>
                       <p className="text-xs text-gray-500">
-                        {d.referenceType && `${d.referenceType}: ${d.referenceId}`}
-                        {d.createdAt && ` • ${new Date(d.createdAt).toLocaleDateString()}`}
+                        {d.orderCount != null ? `${d.orderCount} orders` : ""}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-bold" style={{ color: COLORS.error }}>-₹{(d.amount || 0).toLocaleString()}</p>
-                      {d.metadata?.feePercentage && (
-                        <p className="text-xs text-gray-500">{d.metadata.feePercentage}% fee</p>
-                      )}
+                      <p className="text-sm font-bold" style={{ color: COLORS.error }}>
+                        -₹{(d.amount || 0).toLocaleString()}
+                      </p>
                     </div>
                   </div>
                 ))}

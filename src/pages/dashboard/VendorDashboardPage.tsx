@@ -213,8 +213,8 @@ const VendorDashboardPage = () => {
       {/* Two Column Layout for Tables */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Recent Orders Table */}
-        <section className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+        <section className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col" style={{ maxHeight: '500px' }}>
+          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2">
               <Package size={18} className="text-gray-700" />
               <h2 className="text-base font-bold text-gray-900">Recent Orders</h2>
@@ -226,7 +226,7 @@ const VendorDashboardPage = () => {
               View All <ArrowRight size={14} />
             </button>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-y-auto overflow-x-auto flex-1">
             {recentOrders.length === 0 ? (
               <div className="px-6 py-12 text-center text-gray-500">
                 <Package size={32} className="mx-auto mb-2 opacity-30" />
@@ -234,7 +234,7 @@ const VendorDashboardPage = () => {
               </div>
             ) : (
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Order
@@ -288,8 +288,8 @@ const VendorDashboardPage = () => {
         </section>
 
         {/* Store Performance Table */}
-        <section className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+        <section className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col" style={{ maxHeight: '500px' }}>
+          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2">
               <Store size={18} className="text-gray-700" />
               <h2 className="text-base font-bold text-gray-900">Store Performance</h2>
@@ -301,7 +301,7 @@ const VendorDashboardPage = () => {
               View All <ArrowRight size={14} />
             </button>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-y-auto overflow-x-auto flex-1">
             {stores.length === 0 ? (
               <div className="px-6 py-12 text-center text-gray-500">
                 <Store size={32} className="mx-auto mb-2 opacity-30" />
@@ -309,7 +309,7 @@ const VendorDashboardPage = () => {
               </div>
             ) : (
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Store

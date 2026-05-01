@@ -17,6 +17,10 @@ export const API_ENDPOINTS = {
     legal: "/vendor/org/legal",
     agreement: "/vendor/org/agreement",
 
+    // Vendor-Org (alternate org routes)
+    vendorOrgLegal: "/vendor/vendor-org/legal",
+    vendorOrgAgreement: "/vendor/vendor-org/agreement",
+
     // Stores
     storesNearby: "/vendor/stores/nearby",
     stores: "/vendor/stores",
@@ -44,31 +48,60 @@ export const API_ENDPOINTS = {
     // Analytics
     performance: "/vendor/analytics/performance",
 
-    // Finance - Wallet
+    // Finance - Wallet (primary paths)
     walletSummary: "/vendor/finance/wallet/summary",
     walletStoreWise: "/vendor/finance/wallet/store-wise",
     walletDeductions: "/vendor/finance/wallet/deductions",
 
-    // Finance - Closure
+    // Finance - Wallet (alias paths)
+    walletSummaryAlias: "/vendor/wallet/summary",
+    walletStoreWiseAlias: "/vendor/wallet/store-wise",
+    walletDeductionsAlias: "/vendor/wallet/deductions",
+
+    // Finance - Closure (primary paths)
     closureDaily: "/vendor/finance/closure/daily",
     closureWeekly: "/vendor/finance/closure/weekly",
     closureMonthly: "/vendor/finance/closure/monthly",
 
-    // Finance - Payouts
+    // Finance - Closure (alias paths)
+    closureDailyAlias: "/vendor/closure/daily",
+    closureWeeklyAlias: "/vendor/closure/weekly",
+    closureMonthlyAlias: "/vendor/closure/monthly",
+
+    // Finance - Payouts (primary paths)
     payoutsSchedule: "/vendor/finance/payouts/schedule",
     payoutsHistory: "/vendor/finance/payouts/history",
+
+    // Finance - Payouts (alias paths)
+    payoutsScheduleAlias: "/vendor/payouts/schedule",
+    payoutsHistoryAlias: "/vendor/payouts/history",
 
     // Finance - Summary (dashboard)
     financeSummary: "/vendor/finance/wallet/summary",
 
-    // Scoring
+    // Finance Service gateway (routes via /api/finance, not /api/vendor)
+    financeServiceSummary: "/finance/vendor/finance/summary",
+    financeServicePayoutHistory: "/finance/vendor/finance/payout-history",
+
+    // Scoring (primary paths)
     rejectionsHistory: "/vendor/scoring/rejections/history",
     performanceScore: "/vendor/scoring/performance-score",
 
-    // Support Tickets — correct endpoint per spec
+    // Scoring (alias paths)
+    rejectionsHistoryAlias: "/vendor/rejections/history",
+    performanceScoreAlias: "/vendor/performance-score",
+    performanceScoreVendorAlias: "/vendor/vendor/performance-score",
+
+    // Support Tickets (primary paths)
     supportTickets: "/vendor/support/tickets",
     supportTicketById: (id: string) => `/vendor/support/tickets/${id}`,
     supportTicketReply: (id: string) => `/vendor/support/tickets/${id}/reply`,
     supportTicketSummary: "/vendor/support/tickets/summary",
+
+    // Support Tickets (alias paths)
+    tickets: "/vendor/tickets",
+    ticketById: (id: string) => `/vendor/tickets/${id}`,
+    ticketReply: (id: string) => `/vendor/tickets/${id}/reply`,
+    ticketSummary: "/vendor/tickets/summary",
   },
 } as const;

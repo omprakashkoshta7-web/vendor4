@@ -249,154 +249,163 @@ export interface VendorPayout {
   paidAt?: string;
 }
 
+// ── Wallet Summary ──────────────────────────────────────────────────────────
+// GET /api/vendor/finance/wallet/summary  (alias: /api/vendor/wallet/summary)
 export interface VendorWalletSummary {
-  _id: string;
-  userId: string;
-  userType: string;
-  balance: number;
-  currency: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  // Legacy fields for backward compatibility
-  pendingSettlement?: number;
-  availableForWithdrawal?: number;
+  balance: number;               // Total vendorPayout sum of all delivered orders
+  pendingSettlement: number;     // balance * 0.2 (20% hold)
+  availableForWithdrawal: number; // balance * 0.8 (80% available)
 }
 
+// ── Store-wise Earnings ──────────────────────────────────────────────────────
+// GET /api/vendor/finance/wallet/store-wise  (alias: /api/vendor/wallet/store-wise)
 export interface VendorStoreWiseEarnings {
-  _id: string;
-  earnings: number;
-  orderCount: number;
+  _id: string;        // storeId from orders collection
+  earnings: number;   // Sum of vendorPayout for that store
+  orderCount: number; // Total delivered orders for that store
 }
 
+// ── Wallet Deduction (Platform Fee) ─────────────────────────────────────────
+// GET /api/vendor/finance/wallet/deductions  (alias: /api/vendor/wallet/deductions)
 export interface VendorDeduction {
-  _id: string;
-  walletId: string;
-  userId: string;
-  type: "debit" | "credit";
-  category: "payout_deduction" | "refund" | "platform_fee" | "gst" | "other";
-  amount: number;
-  balanceBefore: number;
-  balanceAfter: number;
-  referenceId: string;
-  referenceType: "payout" | "order" | "other";
-  description: string;
-  metadata?: Record<string, any>;
-  createdAt: string;
+  type: "platform_fee";  // Always "platform_fee"
+  amount: number;        // SUM(order.total - order.vendorPayout) across all delivered orders
+  orderCount: number;    // Total delivered orders counted
 }
 
-export interface VendorClosureDaily {
-  period: "daily";
-  date: string;
-  earnings: number;
-  count: number;
-  breakdown: {
-    orders: Array<{
-      orderId: string;
-      orderNumber: string;
-      amount: number;
-      status: string;
-      completedAt: string;
-    }>;
-  };
+export interface VendorWalletDeductionsResponse {
+  deductions: VendorDeduction[];
 }
 
-export interface VendorClosureWeekly {
-  period: "weekly";
-  weekStart: string;
-  weekEnd: string;
-  totalEarnings: number;
-  totalOrders: number;
-  dailyBreakdown: Array<{
-    date: string;
-    earnings: number;
-    orders: number;
-    avgOrderValue: number;
-  }>;
-  stats: {
-    avgDailyEarnings: number;
-    maxDailyEarnings: number;
-    minDailyEarnings: number;
-    bestDay: string;
-    worstDay: string;
-  };
+// ── Closure (Daily / Weekly / Monthly) ──────────────────────────────────────
+// GET /api/vendor/finance/closure/daily|weekly|monthly
+// (aliases: /api/vendor/closure/daily|weekly|monthly)
+export interface VendorClosure {
+  period: "daily" | "weekly" | "monthly";
+  from: string;       // Period start ISO date
+  to: string;         // Period end ISO date
+  earnings: number;   // Sum of vendorPayout for delivered orders in period
+  count: number;      // Number of delivered orders in period
+  grossSales: number; // Sum of order.total for period
+  discount: number;   // Sum of order.discount for period
 }
 
-export interface VendorClosureMonthly {
-  period: "monthly";
-  month: string;
-  totalEarnings: number;
-  totalOrders: number;
-  weeklyBreakdown: Array<{
-    week: string;
-    earnings: number;
-    orders: number;
-    avgOrderValue: number;
-  }>;
-  categoryWise: {
-    printing: { earnings: number; orders: number; percentage: number; avgOrderValue: number };
-    gifting: { earnings: number; orders: number; percentage: number; avgOrderValue: number };
-    shopping: { earnings: number; orders: number; percentage: number; avgOrderValue: number };
-  };
-  stats: {
-    avgDailyEarnings: number;
-    maxDailyEarnings: number;
-    minDailyEarnings: number;
-    bestWeek: string;
-    bestDay: string;
-    totalDaysActive: number;
-  };
-}
-
+// ── Payout Schedule ──────────────────────────────────────────────────────────
+// GET /api/vendor/finance/payouts/schedule  (alias: /api/vendor/payouts/schedule)
 export interface VendorPayoutSchedule {
-  nextPayoutDate: string;
-  estimatedAmount: number;
-  lastPayoutDate: string;
-  lastPayoutAmount: number;
-  payoutFrequency: string;
-  payoutMethod: string;
-  bankAccount: {
-    accountName: string;
-    accountNumber: string;
-    ifscCode: string;
-    bankName: string;
-  };
-  estimatedDeductions: {
-    platformFee: number;
-    gst: number;
-    other: number;
-  };
-  estimatedNetAmount: number;
+  nextPayoutDate: string;    // Next Sunday's date
+  estimatedAmount: number;   // Pending payout netAmount or weekly earnings
+  status: "pending" | "processing" | "scheduled";
+  payoutId: string;          // Payout document _id if pending payout exists
 }
 
+// ── Payout Record (DB model: payouts collection) ─────────────────────────────
+// GET /api/vendor/finance/payouts/history  (alias: /api/vendor/payouts/history)
 export interface VendorPayoutRecord {
-  _id: string;
-  vendorId: string;
-  payoutDate: string;
-  amount: number;
-  status: "paid" | "pending" | "processing" | "failed";
-  transactionId: string;
-  bankAccount: string;
-  ordersIncluded: number;
+  id: string;           // _id
+  amount: number;       // netAmount ?? amount  (net after platform fee)
+  grossAmount: number;  // amount (gross before fee)
+  platformFee: number;  // Platform cut (10%)
+  status: "pending" | "processing" | "paid" | "failed";
   periodStart: string;
   periodEnd: string;
-  breakdown: {
-    grossAmount: number;
-    platformFee: number;
-    gst: number;
-    netAmount: number;
-  };
-  paidAt: string;
+  createdAt: string;
+  transferredAt: string; // Transfer timestamp
+  notes: string;         // Admin notes
+  // Full DB fields also available:
+  vendorId?: string;
+  currency?: string;
+  orderIds?: string[];
+  transferId?: string;
+  failureReason?: string | null;
+  updatedAt?: string;
 }
 
 export interface VendorPayoutHistory {
   payouts: VendorPayoutRecord[];
-  summary: {
-    totalPayouts: number;
-    totalAmount: number;
-    avgPayoutAmount: number;
-    lastPayoutDate: string;
+}
+
+// ── Finance Summary (Finance Service gateway) ────────────────────────────────
+// GET /api/finance/vendor/finance/summary
+export interface VendorFinanceSummaryResponse {
+  pendingPayout: number;      // Sum of netAmount where status = "pending"
+  totalPaid: number;          // Sum of netAmount where status = "paid"
+  totalPayouts: number;       // Total payout documents count
+  platformFeePercent: number; // Always 10 (hardcoded)
+}
+
+// ── Finance Payout History (Finance Service gateway, paginated) ──────────────
+// GET /api/finance/vendor/finance/payout-history?page=1&limit=10
+export interface VendorFinancePayoutRecord {
+  _id: string;
+  vendorId: string;
+  amount: number;
+  platformFee: number;
+  netAmount: number;
+  currency: string;
+  status: "pending" | "processing" | "paid" | "failed";
+  orderIds: string[];
+  transferId: string;
+  transferredAt: string;
+  failureReason: string | null;
+  periodStart: string;
+  periodEnd: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VendorFinancePayoutHistoryResponse {
+  payouts: VendorFinancePayoutRecord[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
   };
+}
+
+// ── Performance Score ────────────────────────────────────────────────────────
+// GET /api/vendor/scoring/performance-score
+// (aliases: /api/vendor/performance-score, /api/vendor/vendor/performance-score)
+export interface VendorPerformanceScore {
+  acceptanceRate: number;  // ((total - rejected) / total) * 100
+  completionRate: number;  // (delivered / total) * 100
+  overallScore: number;    // (acceptanceRate + completionRate) / 2
+}
+
+// ── Legacy / kept for backward compat ───────────────────────────────────────
+/** @deprecated Use VendorPayoutRecord instead */
+export interface VendorPayout {
+  _id: string;
+  vendorId: string;
+  amount: number;
+  platformFee?: number;
+  netAmount?: number;
+  currency?: string;
+  status: "pending" | "processing" | "paid" | "failed";
+  orderIds?: string[];
+  transferId?: string;
+  transactionId?: string;
+  bankAccount?: string;
+  ordersIncluded?: number;
+  transferredAt?: string;
+  payoutDate?: string;
+  failureReason?: string;
+  periodStart?: string;
+  periodEnd?: string;
+  notes?: string;
+  breakdown?: {
+    platformFee: number;
+    gst: number;
+    other?: number;
+    grossAmount?: number;
+    netAmount?: number;
+  };
+  grossAmount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  paidAt?: string;
 }
 
 export interface SupportReply {
