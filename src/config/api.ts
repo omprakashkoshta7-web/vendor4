@@ -32,6 +32,7 @@ export const API_ENDPOINTS = {
     storeAvailability: (id: string) => `/vendor/stores/${id}/availability`,
     storeCapacity: (id: string) => `/vendor/stores/${id}/capacity`,
     storeCapabilities: (id: string) => `/vendor/stores/${id}/capabilities`,
+    storeDelete: (id: string) => `/vendor/stores/${id}`,
 
     // Staff
     staff: "/vendor/staff",

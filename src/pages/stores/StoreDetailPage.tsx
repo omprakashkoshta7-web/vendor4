@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, Save, Store, MapPin, Phone, Mail,
   Clock, Package, ToggleLeft, CheckCircle, XCircle,
-  Edit2, X, RefreshCw, Zap, TrendingUp
+  Edit2, X, RefreshCw, Zap, TrendingUp, Trash2, AlertTriangle
 } from "lucide-react";
 import { COLORS } from "../../utils/colors";
 import {
@@ -13,6 +13,7 @@ import {
   updateVendorStoreCapacity,
   updateVendorStoreStatus,
   getStoreCapabilities,
+  deleteVendorStore,
 } from "../../services/vendor.service";
 import type { VendorStore } from "../../types/vendor";
 import LoadingState from "../../components/ui/LoadingState";
@@ -48,6 +49,8 @@ export default function StoreDetailPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [capabilities, setCapabilities] = useState<any>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [form, setForm] = useState({
     name: "", workingHours: "", phone: "", email: "",
     maxOrdersPerDay: "0", currentLoad: "0", dailyLimit: "0", maxConcurrentOrders: "10",
@@ -149,6 +152,22 @@ export default function StoreDetailPage() {
     }
   };
 
+  // DELETE /api/vendor/stores/:id
+  const handleDelete = async () => {
+    if (!store) return;
+    try {
+      setDeleting(true);
+      setError("");
+      await deleteVendorStore(store._id);
+      navigate("/stores");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete store");
+      setShowDeleteModal(false);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (loading) return <LoadingState message="Loading store details" />;
 
   const isOnline = store?.isActive && store?.isAvailable;
@@ -218,11 +237,18 @@ export default function StoreDetailPage() {
                 </button>
               </>
             ) : (
-              <button onClick={() => setEditMode(true)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-white transition"
-                style={{ backgroundColor: COLORS.primary }}>
-                <Edit2 size={14} /> Edit
-              </button>
+              <>
+                <button onClick={() => setShowDeleteModal(true)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition"
+                  style={{ backgroundColor: COLORS.errorBg, color: COLORS.error, border: `1px solid ${COLORS.errorBorder}` }}>
+                  <Trash2 size={14} /> Delete
+                </button>
+                <button onClick={() => setEditMode(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-white transition"
+                  style={{ backgroundColor: COLORS.primary }}>
+                  <Edit2 size={14} /> Edit
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -332,6 +358,39 @@ export default function StoreDetailPage() {
                   </span>
                 ))}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl my-auto">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: COLORS.errorBg }}>
+                <AlertTriangle size={18} style={{ color: COLORS.error }} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-gray-900">Delete Store</h3>
+                <p className="text-xs text-gray-500 mt-0.5">This action cannot be undone</p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mb-5">
+              Are you sure you want to delete <span className="font-bold text-gray-900">"{store?.name}"</span>?
+              All store data will be permanently removed.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowDeleteModal(false)} disabled={deleting}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition disabled:opacity-50">
+                Cancel
+              </button>
+              <button onClick={() => void handleDelete()} disabled={deleting}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition disabled:opacity-60"
+                style={{ backgroundColor: COLORS.error }}>
+                {deleting ? "Deleting..." : "Delete Store"}
+              </button>
             </div>
           </div>
         </div>

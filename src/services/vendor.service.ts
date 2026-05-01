@@ -211,6 +211,12 @@ export async function getStoreCapabilities(id: string) {
   return apiRequest<ApiEnvelope<StoreCapabilities>>(API_ENDPOINTS.vendor.storeCapabilities(id));
 }
 
+export async function deleteVendorStore(id: string) {
+  return apiRequest<ApiEnvelope<null>>(API_ENDPOINTS.vendor.storeDelete(id), {
+    method: "DELETE",
+  });
+}
+
 // ============================================
 // STAFF APIs
 // ============================================

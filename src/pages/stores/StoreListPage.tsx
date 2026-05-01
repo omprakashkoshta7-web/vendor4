@@ -2,14 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Package, Plus, Store, ToggleLeft, TrendingUp,
-  Search, RefreshCw, CheckCircle, XCircle, Zap
+  Search, RefreshCw, CheckCircle, XCircle, Zap, Trash2, AlertTriangle
 } from "lucide-react";
 import { COLORS } from "../../utils/colors";
 import {
   getVendorStores,
   updateVendorStoreAvailability,
   updateVendorStoreStatus,
-  getStoreCapabilities
+  getStoreCapabilities,
+  deleteVendorStore,
 } from "../../services/vendor.service";
 import type { VendorStore } from "../../types/vendor";
 import VendorMetricCard from "../../components/ui/VendorMetricCard";
@@ -24,6 +25,8 @@ export default function StoreListPage() {
   const [busyId, setBusyId] = useState("");
   const [search, setSearch] = useState("");
   const [capabilitiesModal, setCapabilitiesModal] = useState<{ storeId: string; data: any } | null>(null);
+  const [deleteModal, setDeleteModal] = useState<VendorStore | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // API 1: GET /api/vendor/stores
   const loadStores = async () => {
@@ -94,6 +97,23 @@ export default function StoreListPage() {
       setCapabilitiesModal({ storeId, data: res.data });
     } catch {
       setError("Failed to load capabilities");
+    }
+  };
+
+  // DELETE /api/vendor/stores/:id
+  const handleDelete = async () => {
+    if (!deleteModal) return;
+    try {
+      setDeleting(true);
+      setError("");
+      await deleteVendorStore(deleteModal._id);
+      setStores(cur => cur.filter(s => s._id !== deleteModal._id));
+      setDeleteModal(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete store");
+      setDeleteModal(null);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -237,6 +257,13 @@ export default function StoreListPage() {
                     title="View Capabilities">
                     <Zap size={15} className="text-gray-500" />
                   </button>
+                  {/* DELETE store */}
+                  <button onClick={() => setDeleteModal(store)}
+                    className="px-3 py-2 rounded-xl border transition"
+                    style={{ backgroundColor: COLORS.errorBg, borderColor: COLORS.errorBorder, color: COLORS.error }}
+                    title="Delete Store">
+                    <Trash2 size={15} />
+                  </button>
                   {/* API 4: toggle active status */}
                   <button onClick={() => void toggleStatus(store)}
                     disabled={busyId === `status-${store._id}`}
@@ -308,6 +335,39 @@ export default function StoreListPage() {
               className="w-full mt-5 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl my-auto">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: COLORS.errorBg }}>
+                <AlertTriangle size={18} style={{ color: COLORS.error }} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-gray-900">Delete Store</h3>
+                <p className="text-xs text-gray-500 mt-0.5">This action cannot be undone</p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mb-5">
+              Are you sure you want to delete <span className="font-bold text-gray-900">"{deleteModal.name}"</span>?
+              All store data will be permanently removed.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteModal(null)} disabled={deleting}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition disabled:opacity-50">
+                Cancel
+              </button>
+              <button onClick={() => void handleDelete()} disabled={deleting}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition disabled:opacity-60"
+                style={{ backgroundColor: COLORS.error }}>
+                {deleting ? "Deleting..." : "Delete Store"}
+              </button>
+            </div>
           </div>
         </div>
       )}
