@@ -96,6 +96,10 @@ export const API_ENDPOINTS = {
     performanceScoreAlias: "/vendor/performance-score",
     performanceScoreVendorAlias: "/vendor/vendor/performance-score",
 
+    // Order Service Score + Closure
+    ordersScore: "/vendor/orders/score",
+    ordersClosure: "/vendor/orders/closure",
+
     // Support Tickets (primary paths)
     supportTickets: "/vendor/support/tickets",
     supportTicketById: (id: string) => `/vendor/support/tickets/${id}`,

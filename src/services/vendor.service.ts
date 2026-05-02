@@ -26,6 +26,8 @@ import type {
   VendorFinanceSummaryResponse,
   VendorFinancePayoutHistoryResponse,
   VendorPerformanceScore,
+  VendorDetailedScore,
+  VendorOrderClosure,
 } from "../types/vendor";
 
 export const OWNER_PERMISSIONS = [
@@ -515,6 +517,20 @@ export async function getVendorRejectionsHistory() {
 
 export async function getVendorPerformanceScore() {
   return apiRequest<ApiEnvelope<VendorPerformanceScore>>(API_ENDPOINTS.vendor.performanceScore);
+}
+
+// GET /api/vendor/orders/score — detailed score from order-service
+export async function getVendorDetailedScore() {
+  return apiRequest<ApiEnvelope<VendorDetailedScore>>(API_ENDPOINTS.vendor.ordersScore);
+}
+
+// GET /api/vendor/orders/closure?period=daily|weekly|monthly&date=YYYY-MM-DD
+export async function getVendorOrderClosure(period: "daily" | "weekly" | "monthly" = "daily", date?: string) {
+  const params = new URLSearchParams({ period });
+  if (date) params.set("date", date);
+  return apiRequest<ApiEnvelope<VendorOrderClosure>>(
+    `${API_ENDPOINTS.vendor.ordersClosure}?${params.toString()}`
+  );
 }
 
 // ============================================

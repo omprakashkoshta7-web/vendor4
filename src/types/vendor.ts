@@ -456,6 +456,92 @@ export interface VendorPerformanceScore {
   overallScore: number;    // (acceptanceRate + completionRate) / 2
 }
 
+// ── Detailed Vendor Score (Order Service) ────────────────────────────────────
+// GET /api/vendor/orders/score
+export interface VendorScoreMetric {
+  label: string;
+  value: string;
+  target: string;
+  num: number;
+  status: "good" | "needs_attention";
+  desc: string;
+}
+
+export interface VendorScoreRadarPoint {
+  metric: string;
+  score: number;
+  target: number;
+}
+
+export interface VendorScoreTrendPoint {
+  week: string;
+  score: number;
+}
+
+export interface VendorScoreRejection {
+  id: string;
+  reason: string;
+  date: string;
+  counted: boolean;
+}
+
+export interface VendorScoreTotals {
+  total: number;
+  accepted: number;
+  rejected: number;
+  completed: number;
+}
+
+export interface VendorDetailedScore {
+  overallScore: number;
+  routingPriority: "High" | "Medium" | "Low";
+  acceptanceRate: number;
+  slaCompliance: number;
+  metrics: VendorScoreMetric[];
+  radarData: VendorScoreRadarPoint[];
+  scoreTrend: VendorScoreTrendPoint[];
+  rejectionHistory: VendorScoreRejection[];
+  totals: VendorScoreTotals;
+}
+
+// ── Order Service Closure ─────────────────────────────────────────────────────
+// GET /api/vendor/orders/closure?period=daily&date=2026-05-01
+export interface VendorOrderClosureSummary {
+  totalJobs: number;
+  completedJobs: number;
+  deliveredJobs: number;
+  totalEarnings: number;
+  avgOrderValue: number;
+}
+
+export interface VendorOrderClosureStoreBreakdown {
+  storeId: string;
+  jobs: number;
+  earnings: number;
+  percentage: number;
+}
+
+export interface VendorOrderClosureChartPoint {
+  period: string;
+  earnings: number;
+}
+
+export interface VendorOrderClosureJob {
+  id: string;
+  type: string;
+  storeId: string;
+  amount: number;
+  status: string;
+  completedAt: string;
+}
+
+export interface VendorOrderClosure {
+  summary: VendorOrderClosureSummary;
+  storeBreakdown: VendorOrderClosureStoreBreakdown[];
+  chartData: VendorOrderClosureChartPoint[];
+  jobs: VendorOrderClosureJob[];
+}
+
 // ── Legacy / kept for backward compat ───────────────────────────────────────
 /** @deprecated Use VendorPayoutRecord instead */
 export interface VendorPayout {
