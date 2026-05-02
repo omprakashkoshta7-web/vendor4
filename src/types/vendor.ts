@@ -381,10 +381,10 @@ export interface VendorPayoutSchedule {
   payoutId: string;          // Payout document _id if pending payout exists
 }
 
-// ── Payout Record (DB model: payouts collection) ─────────────────────────────
+// ── Payout Record — Vendor Service (mapped, last 50, no pagination) ──────────
 // GET /api/vendor/finance/payouts/history  (alias: /api/vendor/payouts/history)
 export interface VendorPayoutRecord {
-  id: string;           // _id
+  id: string;           // _id mapped
   amount: number;       // netAmount ?? amount  (net after platform fee)
   grossAmount: number;  // amount (gross before fee)
   platformFee: number;  // Platform cut (10%)
@@ -392,38 +392,31 @@ export interface VendorPayoutRecord {
   periodStart: string;
   periodEnd: string;
   createdAt: string;
-  transferredAt: string; // Transfer timestamp
-  notes: string;         // Admin notes
-  // Full DB fields also available:
-  vendorId?: string;
-  currency?: string;
-  orderIds?: string[];
-  transferId?: string;
-  failureReason?: string | null;
-  updatedAt?: string;
+  transferredAt: string;
+  notes: string;
 }
 
 export interface VendorPayoutHistory {
   payouts: VendorPayoutRecord[];
 }
 
-// ── Finance Summary (Finance Service gateway) ────────────────────────────────
+// ── Finance Service Payout Summary ──────────────────────────────────────────
 // GET /api/finance/vendor/finance/summary
 export interface VendorFinanceSummaryResponse {
-  pendingPayout: number;      // Sum of netAmount where status = "pending"
-  totalPaid: number;          // Sum of netAmount where status = "paid"
+  pendingPayout: number;      // SUM(netAmount) where status = "pending"
+  totalPaid: number;          // SUM(netAmount) where status = "paid"
   totalPayouts: number;       // Total payout documents count
   platformFeePercent: number; // Always 10 (hardcoded)
 }
 
-// ── Finance Payout History (Finance Service gateway, paginated) ──────────────
+// ── Finance Service Payout History (paginated, full DB fields) ───────────────
 // GET /api/finance/vendor/finance/payout-history?page=1&limit=10
 export interface VendorFinancePayoutRecord {
   _id: string;
   vendorId: string;
-  amount: number;
+  amount: number;        // gross amount
   platformFee: number;
-  netAmount: number;
+  netAmount: number;     // amount - platformFee
   currency: string;
   status: "pending" | "processing" | "paid" | "failed";
   orderIds: string[];
