@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Download, FileText, RefreshCw, AlertTriangle,
   Clock, DollarSign, TrendingUp, Calendar, CheckCircle,
-  XCircle, CreditCard, Percent, ChevronLeft, ChevronRight,
+  XCircle, Percent, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import LoadingState from "../../components/ui/LoadingState";
 import { COLORS } from "../../utils/colors";
