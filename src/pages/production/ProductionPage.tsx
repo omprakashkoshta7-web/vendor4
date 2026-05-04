@@ -317,46 +317,51 @@ export default function ProductionPage() {
                 <div className="text-center py-4 text-xs text-gray-400">Loading riders...</div>
               ) : filteredRiders.length > 0 ? (
                 <div className="max-h-48 overflow-y-auto space-y-1.5 rounded-xl border border-gray-200 p-2">
-                  {filteredRiders.map(rider => (
-                    <button
-                      key={rider._id}
-                      onClick={() => setSelectedRider(selectedRider?._id === rider._id ? null : rider)}
-                      className="w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition"
-                      style={{
-                        backgroundColor: selectedRider?._id === rider._id ? `${COLORS.primary}12` : "transparent",
-                        border: selectedRider?._id === rider._id ? `1.5px solid ${COLORS.primary}` : "1.5px solid transparent",
-                      }}>
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                        style={{ backgroundColor: COLORS.primary }}>
-                        {rider.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-gray-900 truncate">{rider.name}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {rider.phone && <span className="text-xs text-gray-500">{rider.phone}</span>}
-                          {rider.vehicleType && (
-                            <span className="text-xs px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-600 flex items-center gap-1">
-                              <Bike size={10} /> {rider.vehicleType}
-                            </span>
-                          )}
-                          {rider.rating != null && (
-                            <span className="text-xs text-gray-500 flex items-center gap-0.5">
-                              <Star size={10} className="text-yellow-400" /> {rider.rating.toFixed(1)}
-                            </span>
-                          )}
-                          {rider.totalTrips != null && (
-                            <span className="text-xs text-gray-400">{rider.totalTrips} trips</span>
+                  {filteredRiders.map(rider => {
+                    const isSelected = selectedRider?._id === rider._id;
+                    return (
+                      <button
+                        key={rider._id}
+                        type="button"
+                        onClick={() => setSelectedRider(isSelected ? null : rider)}
+                        className="w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition"
+                        style={{
+                          backgroundColor: isSelected ? `${COLORS.primary}12` : "transparent",
+                          border: `1.5px solid ${isSelected ? COLORS.primary : "transparent"}`,
+                        }}>
+                        {/* Radio indicator */}
+                        <div className="w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0"
+                          style={{ borderColor: isSelected ? COLORS.primary : "#d1d5db" }}>
+                          {isSelected && (
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.primary }} />
                           )}
                         </div>
-                      </div>
-                      {selectedRider?._id === rider._id && (
-                        <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
-                          style={{ backgroundColor: COLORS.primary }}>
-                          <div className="w-2 h-2 rounded-full bg-white" />
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                          style={{ backgroundColor: isSelected ? COLORS.primary : "#94a3b8" }}>
+                          {(rider.name || "?").charAt(0).toUpperCase()}
                         </div>
-                      )}
-                    </button>
-                  ))}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-gray-900 truncate">{rider.name || "Unknown"}</p>
+                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                            {rider.phone && <span className="text-xs text-gray-500">{rider.phone}</span>}
+                            {rider.vehicleType && (
+                              <span className="text-xs px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-600 flex items-center gap-1">
+                                <Bike size={10} /> {rider.vehicleType}
+                              </span>
+                            )}
+                            {rider.rating != null && (
+                              <span className="text-xs text-gray-500 flex items-center gap-0.5">
+                                <Star size={10} className="text-yellow-400" /> {rider.rating.toFixed(1)}
+                              </span>
+                            )}
+                            {rider.totalTrips != null && (
+                              <span className="text-xs text-gray-400">{rider.totalTrips} trips</span>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-3 text-xs text-gray-400 border border-gray-200 rounded-xl">
