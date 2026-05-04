@@ -62,7 +62,16 @@ export default function ProductionPage() {
     setRidersLoading(true);
     try {
       const res = await getAvailableDeliveryPartners({ limit: 20 });
-      setRiders(res.data || []);
+      // Backend may return array directly or nested — handle both
+      const raw = res.data;
+      const list: DeliveryPartner[] = Array.isArray(raw)
+        ? raw
+        : Array.isArray((raw as any)?.riders)
+        ? (raw as any).riders
+        : Array.isArray((raw as any)?.deliveryPartners)
+        ? (raw as any).deliveryPartners
+        : [];
+      setRiders(list);
     } catch {
       setRiders([]);
     } finally {
@@ -73,8 +82,8 @@ export default function ProductionPage() {
   // Filter riders by search
   const filteredRiders = riderSearch.trim()
     ? riders.filter(r => {
-        const name = r.name || r.fullName || r.riderName || "";
-        const phone = r.phone || r.phoneNumber || "";
+        const name = (r as any).name || (r as any).fullName || (r as any).riderName || (r as any).displayName || "";
+        const phone = (r as any).phone || (r as any).phoneNumber || (r as any).mobile || "";
         const s = riderSearch.toLowerCase();
         return name.toLowerCase().includes(s) || phone.includes(riderSearch);
       })
@@ -321,10 +330,27 @@ export default function ProductionPage() {
                 <div className="max-h-48 overflow-y-auto space-y-1.5 rounded-xl border border-gray-200 p-2">
                   {filteredRiders.map((rider, idx) => {
                     const isSelected = selectedRider?._id === rider._id;
-                    // Resolve name and phone from multiple possible field names
-                    const riderName = rider.name || rider.fullName || rider.riderName || "";
-                    const riderPhone = rider.phone || rider.phoneNumber || "";
-                    const riderVehicle = rider.vehicleType || rider.vehicle || "";
+                    // Try all possible field names from backend
+                    const riderName = (rider as any).name
+                      || (rider as any).fullName
+                      || (rider as any).riderName
+                      || (rider as any).displayName
+                      || (rider as any).userName
+                      || (rider as any).user?.name
+                      || (rider as any).profile?.name
+                      || "";
+                    const riderPhone = (rider as any).phone
+                      || (rider as any).phoneNumber
+                      || (rider as any).mobile
+                      || (rider as any).contactNumber
+                      || (rider as any).user?.phone
+                      || "";
+                    const riderVehicle = (rider as any).vehicleType
+                      || (rider as any).vehicle
+                      || (rider as any).vehicleCategory
+                      || "";
+                    const riderRating = (rider as any).rating ?? (rider as any).avgRating ?? null;
+                    const riderTrips = (rider as any).totalTrips ?? (rider as any).completedTrips ?? null;
                     const displayName = riderName || riderPhone || (rider._id ? String(rider._id).slice(-6) : `Rider ${idx + 1}`);
                     return (
                       <button
@@ -356,13 +382,13 @@ export default function ProductionPage() {
                                 <Bike size={10} /> {riderVehicle}
                               </span>
                             )}
-                            {rider.rating != null && (
+                            {riderRating != null && (
                               <span className="text-xs text-gray-500 flex items-center gap-0.5">
-                                <Star size={10} className="text-yellow-400" /> {Number(rider.rating).toFixed(1)}
+                                <Star size={10} className="text-yellow-400" /> {Number(riderRating).toFixed(1)}
                               </span>
                             )}
-                            {rider.totalTrips != null && (
-                              <span className="text-xs text-gray-400">{rider.totalTrips} trips</span>
+                            {riderTrips != null && (
+                              <span className="text-xs text-gray-400">{riderTrips} trips</span>
                             )}
                           </div>
                         </div>
