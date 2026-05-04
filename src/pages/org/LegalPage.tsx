@@ -89,7 +89,15 @@ function DocCard({
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) onFileChange(file);
+              if (file) {
+                // 5MB limit
+                if (file.size > 5 * 1024 * 1024) {
+                  alert("File too large. Maximum size is 5MB.");
+                  e.target.value = "";
+                  return;
+                }
+                onFileChange(file);
+              }
             }}
           />
           <button
@@ -102,7 +110,7 @@ function DocCard({
               color: selectedFile ? COLORS.info : "#4b5563",
             }}>
             <Upload size={14} />
-            {uploading ? "Uploading..." : selectedFile ? `📄 ${selectedFile.name}` : "Upload Document (PDF/Image)"}
+            {uploading ? "Uploading..." : selectedFile ? `📄 ${selectedFile.name}` : "Upload Document (PDF/Image, max 5MB)"}
           </button>
         </div>
       )}
