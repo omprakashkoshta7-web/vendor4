@@ -26,7 +26,6 @@ export default function ProductionPage() {
   const [handoverRiderId, setHandoverRiderId] = useState("");
   const [handoverNote, setHandoverNote] = useState("");
   const [handoverBusy, setHandoverBusy] = useState(false);
-
   const loadOrders = async () => {
     try {
       setLoading(true);
@@ -226,9 +225,12 @@ export default function ProductionPage() {
                   ) : null}
 
                   {order.status === "ready_for_pickup" ? (
-                    <div className="flex-1 rounded-xl border px-4 py-2 text-sm font-semibold text-center" style={{ backgroundColor: COLORS.successBg, borderColor: COLORS.successBorder, color: COLORS.success }}>
-                      Awaiting delivery or pickup
-                    </div>
+                    <button
+                      onClick={() => setHandoverOrder(order)}
+                      className="flex-1 flex items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-sm font-bold text-white transition"
+                      style={{ backgroundColor: COLORS.primary }}>
+                      <Truck size={14} /> Handover to Rider
+                    </button>
                   ) : null}
                 </div>
               </div>
@@ -242,6 +244,72 @@ export default function ProductionPage() {
               <p className="text-xs text-gray-400 mt-1">Orders will appear here once accepted</p>
             </div>
           ) : null}
+        </div>
+      )}
+
+      {/* Handover Modal */}
+      {handoverOrder && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl my-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Handover to Rider</h3>
+              <button onClick={() => setHandoverOrder(null)}><X size={18} className="text-gray-400" /></button>
+            </div>
+            <div className="p-3 rounded-xl border mb-4"
+              style={{ backgroundColor: COLORS.infoBg, borderColor: COLORS.infoBorder }}>
+              <p className="text-xs font-bold" style={{ color: COLORS.info }}>
+                Order: <span className="font-mono">{handoverOrder.orderNumber || handoverOrder._id.slice(-8).toUpperCase()}</span>
+              </p>
+              <p className="text-xs mt-1" style={{ color: COLORS.info }}>
+                Confirm physical handover of package to delivery rider.
+              </p>
+            </div>
+            <div className="space-y-4 mb-5">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Rider ID (optional)</label>
+                <input value={handoverRiderId} onChange={e => setHandoverRiderId(e.target.value)}
+                  placeholder="Enter rider ID if known"
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:border-gray-900 transition font-mono" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Note (optional)</label>
+                <textarea value={handoverNote} onChange={e => setHandoverNote(e.target.value)}
+                  placeholder="Any handover notes..."
+                  className="w-full h-20 rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition resize-none" />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => { setHandoverOrder(null); setHandoverRiderId(""); setHandoverNote(""); }}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
+                Cancel
+              </button>
+              <button
+                disabled={handoverBusy}
+                onClick={async () => {
+                  setHandoverBusy(true);
+                  try {
+                    const res = await handoverComplete(handoverOrder._id, {
+                      riderId: handoverRiderId || undefined,
+                      note: handoverNote || undefined,
+                    });
+                    setOrders(cur => cur.map(o => o._id === handoverOrder._id ? res.data : o));
+                    setHandoverOrder(null);
+                    setHandoverRiderId("");
+                    setHandoverNote("");
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : "Failed to complete handover");
+                    setHandoverOrder(null);
+                  } finally {
+                    setHandoverBusy(false);
+                  }
+                }}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white transition disabled:opacity-60"
+                style={{ backgroundColor: COLORS.primary }}>
+                <Truck size={14} />
+                {handoverBusy ? "Confirming..." : "Confirm Handover"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

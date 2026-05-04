@@ -12,13 +12,11 @@ import {
   acceptVendorOrder,
   getVendorOrder,
   rejectVendorOrder,
-  updateOrderStatus,
   uploadQcImages,
   uploadQcImagesMultipart,
   markOrderReady,
   startVendorProduction,
   markVendorQcPending,
-  markVendorReadyForPickup,
   handoverComplete,
 } from "../../services/vendor.service";
 import type { VendorOrder } from "../../types/vendor";
@@ -127,19 +125,8 @@ export default function JobDetailPage() {
     }
   };
 
-  // API 5: POST /api/vendor/orders/:id/status
-  const handleStatusUpdate = async (status: string, note?: string) => {
-    if (!order) return;
-    setBusyAction(status);
-    try {
-      const res = await updateOrderStatus(order._id, status, note);
-      setOrder(res.data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update status");
-    } finally {
-      setBusyAction("");
-    }
-  };
+  // API 5: POST /api/vendor/orders/:id/status (kept for generic use if needed)
+  // Note: production steps use dedicated PATCH endpoints via startVendorProduction / markVendorQcPending
 
   // API 6: POST /api/vendor/orders/:id/qc-upload
   const handleQcUpload = async () => {

@@ -76,7 +76,7 @@ export default function PayoutsPage() {
   // Stats from payouts list
   const stats = useMemo(() => ({
     totalTransferred: payouts
-      .filter(p => p.status === "transferred" || p.status === "paid")
+      .filter(p => p.status === "transferred")
       .reduce((s, p) => s + (p.amount ?? 0), 0),
     pending: payouts
       .filter(p => p.status === "pending")
@@ -239,7 +239,7 @@ export default function PayoutsPage() {
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: sc.bg }}>
-                        {payout.status === "transferred" || payout.status === "paid"
+                        {payout.status === "transferred"
                           ? <CheckCircle size={16} style={{ color: sc.color }} />
                           : payout.status === "failed"
                           ? <XCircle size={16} style={{ color: sc.color }} />
