@@ -42,14 +42,19 @@ export const API_ENDPOINTS = {
 
     // Orders
     ordersAssigned: "/vendor/orders/assigned",
+    ordersQueue: "/vendor/orders/queue",
     orderById: (id: string) => `/vendor/orders/${id}`,
     acceptOrder: (id: string) => `/vendor/orders/${id}/accept`,
     rejectOrder: (id: string) => `/vendor/orders/${id}/reject`,
     updateOrderStatus: (id: string) => `/vendor/orders/${id}/status`,
+    startProduction: (id: string) => `/vendor/orders/${id}/start-production`,
+    markQcPending: (id: string) => `/vendor/orders/${id}/qc-pending`,
+    markReadyForPickup: (id: string) => `/vendor/orders/${id}/ready-for-pickup`,
     qcUpload: (id: string) => `/vendor/orders/${id}/qc-upload`,
     markReady: (id: string) => `/vendor/orders/${id}/ready`,
 
-    // Analytics
+    // Analytics / Dashboard
+    dashboard: "/vendor/dashboard",
     performance: "/vendor/analytics/performance",
 
     // Finance - Wallet (primary paths)

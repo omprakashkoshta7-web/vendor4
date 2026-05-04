@@ -33,10 +33,7 @@ const VendorDashboardPage = () => {
     try {
       setLoading(true);
       setError("");
-      
-      console.log("🔍 [Dashboard] Loading data...");
-      
-      // Fetch all data in parallel with proper error handling
+
       const results = await Promise.allSettled([
         getVendorWalletSummary(),
         getVendorStaff(),
@@ -46,9 +43,6 @@ const VendorDashboardPage = () => {
         getVendorWalletStoreWise(),
       ]);
 
-      console.log("📊 [Dashboard] All Results:", results);
-
-      // Extract data from settled promises
       const financeResponse = results[0].status === "fulfilled" ? results[0].value : null;
       const staffResponse = results[1].status === "fulfilled" ? results[1].value : null;
       const scoreResponse = results[2].status === "fulfilled" ? results[2].value : null;
@@ -56,81 +50,53 @@ const VendorDashboardPage = () => {
       const storesResponse = results[4].status === "fulfilled" ? results[4].value : null;
       const storeEarningsResponse = results[5].status === "fulfilled" ? results[5].value : null;
 
-      console.log("📊 [Dashboard] Finance Response:", financeResponse);
-      console.log("📊 [Dashboard] Staff Response:", staffResponse);
-      console.log("📊 [Dashboard] Score Response:", scoreResponse);
-      console.log("📊 [Dashboard] Orders Response:", ordersResponse);
-      console.log("📊 [Dashboard] Stores Response:", storesResponse);
-      console.log("📊 [Dashboard] Store Earnings Response:", storeEarningsResponse);
-
-      // Calculate active staff
+      // Active staff count
       let activeStaffCount = 0;
       if (staffResponse?.success && Array.isArray(staffResponse.data)) {
         activeStaffCount = staffResponse.data.filter((s: { isActive: boolean }) => s.isActive).length;
-        console.log("👥 Active Staff Count:", activeStaffCount, "Total:", staffResponse.data.length);
       }
 
-      // Calculate jobs from orders
+      // Jobs from orders
       let jobsClosed = 0;
       let totalJobs = 0;
       let orders: VendorOrder[] = [];
       if (ordersResponse?.success && ordersResponse.data) {
         orders = ordersResponse.data.orders || [];
         totalJobs = orders.length;
-        jobsClosed = orders.filter((o: { status: string }) => 
+        jobsClosed = orders.filter((o: { status: string }) =>
           o.status === "delivered" || o.status === "cancelled"
         ).length;
-        console.log("📦 Jobs - Closed:", jobsClosed, "Total:", totalJobs);
-        
-        // Get recent 5 orders
         setRecentOrders(orders.slice(0, 5));
       }
 
-      // Get finance data
+      // Finance — balance / availableForWithdrawal
       let netPayout = 0;
       if (financeResponse?.success && financeResponse.data) {
-        const financeData = financeResponse.data;
-        netPayout = financeData.availableForWithdrawal || financeData.balance || 0;
-        console.log("💰 Net Payout:", netPayout, "Balance:", financeData.balance);
+        const d = financeResponse.data;
+        netPayout = d.availableForWithdrawal || d.balance || 0;
       }
 
-      // Get score data
+      // Score — completionRate or overallScore
       let slaScore = 0;
       if (scoreResponse?.success && scoreResponse.data) {
-        const scoreData = scoreResponse.data;
-        slaScore = Math.round(scoreData.completionRate || scoreData.overallScore || 0);
-        console.log("📈 SLA Score:", slaScore);
+        const d = scoreResponse.data;
+        slaScore = Math.round(d.completionRate || d.overallScore || 0);
       }
 
-      // Get stores data
       if (storesResponse?.success && Array.isArray(storesResponse.data)) {
         setStores(storesResponse.data);
       }
-
-      // Get store earnings
       if (storeEarningsResponse?.success && Array.isArray(storeEarningsResponse.data)) {
         setStoreEarnings(storeEarningsResponse.data);
       }
 
-      const newMetrics = {
-        jobsClosed,
-        totalJobs,
-        netPayout,
-        slaScore,
-        activeStaff: activeStaffCount,
-      };
+      setMetrics({ jobsClosed, totalJobs, netPayout, slaScore, activeStaff: activeStaffCount });
 
-      setMetrics(newMetrics);
-
-      console.log("✅ [Dashboard] Metrics Updated:", newMetrics);
-
-      // Show warning if all APIs failed
       const allFailed = results.every(r => r.status === "rejected");
       if (allFailed) {
         setError("Unable to load dashboard data. Please check your connection and try again.");
       }
     } catch (err) {
-      console.error("❌ [Dashboard] Load Error:", err);
       setError(err instanceof Error ? err.message : "Failed to load dashboard data");
     } finally {
       setLoading(false);

@@ -52,7 +52,7 @@ export async function loginVendor(email: string, password: string) {
     API_ENDPOINTS.auth.login,
     {
       method: "POST",
-      body: JSON.stringify({ email, password, role: "vendor" }),
+      body: JSON.stringify({ email, password }), // spec: no role field
     }
   );
 }
@@ -62,7 +62,7 @@ export async function verifyMfa(code: string) {
     API_ENDPOINTS.auth.mfaVerify,
     {
       method: "POST",
-      body: JSON.stringify({ code }),
+      body: JSON.stringify({ otp: code }), // spec: field name is "otp"
     }
   );
 }
@@ -201,11 +201,12 @@ export async function updateVendorStoreAvailability(id: string, isAvailable: boo
   });
 }
 
-// Backend expects flat fields directly, NOT nested under "capacity"
+// Backend spec: capacity is nested under "capacity" key
+// PUT /api/vendor/stores/:id/capacity → { capacity: { maxOrdersPerDay, currentLoad, dailyLimit, maxConcurrentOrders } }
 export async function updateVendorStoreCapacity(id: string, payload: UpdateStoreCapacityPayload) {
   return apiRequest<ApiEnvelope<VendorStore>>(API_ENDPOINTS.vendor.storeCapacity(id), {
     method: "PUT",
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ capacity: payload }),
   });
 }
 
@@ -707,13 +708,23 @@ export async function getVendorClosure(period = "daily", date?: string) {
 }
 
 export async function startVendorProduction(id: string) {
-  return updateOrderStatus(id, "in_production", "Production started");
+  // Spec: PATCH /api/vendor/orders/:id/start-production
+  return apiRequest<ApiEnvelope<VendorOrder>>(API_ENDPOINTS.vendor.startProduction(id), {
+    method: "PATCH",
+  });
 }
 
 export async function markVendorQcPending(id: string) {
-  return updateOrderStatus(id, "qc_pending", "QC review pending");
+  // Spec: PATCH /api/vendor/orders/:id/qc-pending
+  return apiRequest<ApiEnvelope<VendorOrder>>(API_ENDPOINTS.vendor.markQcPending(id), {
+    method: "PATCH",
+  });
 }
 
 export async function markVendorReadyForPickup(id: string) {
-  return markOrderReady(id);
+  // Spec: PATCH /api/vendor/orders/:id/ready-for-pickup (primary)
+  // Fallback: POST /api/vendor/orders/:id/ready (alias)
+  return apiRequest<ApiEnvelope<VendorOrder>>(API_ENDPOINTS.vendor.markReadyForPickup(id), {
+    method: "PATCH",
+  }).catch(() => markOrderReady(id)); // fallback to alias if 404
 }
