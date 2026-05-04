@@ -93,6 +93,8 @@ export default function VendorLayout() {
   const [notifications, setNotifications] = useState<PortalNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [markingAllRead, setMarkingAllRead] = useState(false);
+  const [notifCategory, setNotifCategory] = useState<string>("all");
+  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const currentSession = getVendorSession();
@@ -120,23 +122,31 @@ export default function VendorLayout() {
 
     const loadNotifications = async () => {
       try {
-        const [summary, recent] = await Promise.all([
-          notificationService.getSummary(),
-          notificationService.getRecent(),
-        ]);
-
+        // Use summary for unread count + category counts
+        const summary = await notificationService.getSummary();
         if (!active) return;
         setUnreadCount(summary.data.unread_count || 0);
-        setNotifications(recent.data.notifications || []);
+        setCategoryCounts(summary.data.category_counts || {});
+        // Use recent_notifications from summary for the panel
+        if (summary.data.recent_notifications?.length) {
+          // Fetch full list for panel display
+          const list = await notificationService.getList({ limit: 20 });
+          if (!active) return;
+          setNotifications(list.data.notifications || []);
+        } else {
+          setNotifications([]);
+        }
       } catch {
+        // Notification endpoint not available — silent fail
         if (!active) return;
         setUnreadCount(0);
         setNotifications([]);
+        setCategoryCounts({});
       }
     };
 
     void loadNotifications();
-    const interval = window.setInterval(() => void loadNotifications(), 15000);
+    const interval = window.setInterval(() => void loadNotifications(), 30000);
 
     return () => {
       active = false;
@@ -167,28 +177,35 @@ export default function VendorLayout() {
   const handleMarkAllRead = async () => {
     if (markingAllRead || unreadCount === 0) return;
     setMarkingAllRead(true);
+    // Optimistic update — mark locally regardless of backend
+    setNotifications(cur => cur.map(n => ({ ...n, isRead: true })));
+    setUnreadCount(0);
     try {
       await notificationService.markAllRead();
-      setNotifications(cur => cur.map(n => ({ ...n, isRead: true })));
-      setUnreadCount(0);
-    } catch { /* silent */ }
+    } catch { /* endpoint may not exist yet */ }
     finally { setMarkingAllRead(false); }
   };
 
   const handleMarkOneRead = async (id: string) => {
+    // Optimistic update
+    setNotifications(cur => cur.map(n => n._id === id ? { ...n, isRead: true } : n));
+    setUnreadCount(cur => Math.max(0, cur - 1));
     try {
       await notificationService.markRead(id);
-      setNotifications(cur => cur.map(n => n._id === id ? { ...n, isRead: true } : n));
-      setUnreadCount(cur => Math.max(0, cur - 1));
-    } catch { /* silent */ }
+    } catch { /* endpoint may not exist yet */ }
   };
 
   const getCategoryIcon = (category: string) => {
     const map: Record<string, string> = {
-      order: "📦", payment: "💰", system: "⚙️", alert: "🔔", support: "🎧",
+      order: "📦", orders: "📦", payment: "💰", rewards: "🎁",
+      system: "⚙️", alert: "🔔", support: "🎧", account: "👤", promotions: "🎉",
     };
     return map[category?.toLowerCase()] || "🔔";
   };
+
+  const filteredNotifications = notifCategory === "all"
+    ? notifications
+    : notifications.filter(n => n.category === notifCategory);
 
   if (!session) {
     return (
@@ -424,14 +441,39 @@ export default function VendorLayout() {
                       </div>
                     </div>
 
+                    {/* Category Filter Tabs */}
+                    {Object.keys(categoryCounts).length > 0 && (
+                      <div className="px-3 py-2 border-b border-slate-100 flex gap-1 overflow-x-auto">
+                        <button
+                          onClick={() => setNotifCategory("all")}
+                          className="flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-lg transition"
+                          style={notifCategory === "all"
+                            ? { backgroundColor: "#2d3f55", color: "#fff" }
+                            : { backgroundColor: "#f1f5f9", color: "#64748b" }}>
+                          All {unreadCount > 0 && `(${unreadCount})`}
+                        </button>
+                        {Object.entries(categoryCounts).map(([cat, count]) => (
+                          <button
+                            key={cat}
+                            onClick={() => setNotifCategory(cat)}
+                            className="flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-lg capitalize transition"
+                            style={notifCategory === cat
+                              ? { backgroundColor: "#2d3f55", color: "#fff" }
+                              : { backgroundColor: "#f1f5f9", color: "#64748b" }}>
+                            {cat} ({count})
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
                     {/* Notification List */}
-                    {notifications.length ? (
-                      <div className="max-h-[420px] overflow-y-auto divide-y divide-slate-50">
-                        {notifications.map((n) => (
+                    {filteredNotifications.length ? (
+                      <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-50">
+                        {filteredNotifications.map((n) => (
                           <div
                             key={n._id}
                             onClick={() => { if (!n.isRead) void handleMarkOneRead(n._id); }}
-                            className={`flex items-start gap-3 px-4 py-3.5 transition cursor-pointer group ${
+                            className={`flex items-start gap-3 px-4 py-3.5 transition cursor-pointer ${
                               n.isRead ? "bg-white hover:bg-slate-50" : "bg-blue-50/60 hover:bg-blue-50"
                             }`}>
                             {/* Category icon */}
@@ -472,12 +514,14 @@ export default function VendorLayout() {
                           <Bell size={22} className="text-slate-400" />
                         </div>
                         <p className="text-sm font-semibold text-slate-700">All caught up!</p>
-                        <p className="text-xs text-slate-400 mt-1">Assigned jobs and status updates will appear here.</p>
+                        <p className="text-xs text-slate-400 mt-1">
+                          {notifCategory !== "all" ? `No ${notifCategory} notifications` : "Assigned jobs and status updates will appear here."}
+                        </p>
                       </div>
                     )}
 
                     {/* Footer */}
-                    {notifications.length > 0 && (
+                    {filteredNotifications.length > 0 && (
                       <div className="px-4 py-3 border-t border-slate-100 bg-slate-50 text-center">
                         <p className="text-xs text-slate-400">
                           {unreadCount > 0 ? `${unreadCount} unread` : "All notifications read"} • Click to mark as read

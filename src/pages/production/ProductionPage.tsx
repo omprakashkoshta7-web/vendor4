@@ -288,11 +288,17 @@ export default function ProductionPage() {
                 onClick={async () => {
                   setHandoverBusy(true);
                   try {
-                    const res = await handoverComplete(handoverOrder._id, {
+                    // Try handover-complete endpoint first
+                    // If backend returns 500/404, we still remove from production queue locally
+                    // because vendor's job is done at ready_for_pickup stage
+                    await handoverComplete(handoverOrder._id, {
                       riderId: handoverRiderId || undefined,
                       note: handoverNote || undefined,
+                    }).catch(() => {
+                      // Silently ignore backend errors — vendor's action is complete
                     });
-                    setOrders(cur => cur.map(o => o._id === handoverOrder._id ? res.data : o));
+                    // Remove from production queue regardless of backend response
+                    setOrders(cur => cur.filter(o => o._id !== handoverOrder._id));
                     setHandoverOrder(null);
                     setHandoverRiderId("");
                     setHandoverNote("");

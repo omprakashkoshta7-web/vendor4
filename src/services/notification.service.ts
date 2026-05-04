@@ -1,36 +1,84 @@
 import { apiRequest } from "./api";
 
+// ── Types ─────────────────────────────────────────────────────────────────────
 export interface PortalNotification {
   _id: string;
+  userId: string;
+  audienceRoles: string[];
+  type: "email" | "sms" | "push" | "in_app";
   title: string;
   message: string;
-  category: string;
+  category: "orders" | "rewards" | "system" | "support" | "account" | "promotions" | string;
   isRead: boolean;
-  createdAt: string;
   metadata?: Record<string, unknown>;
+  actionUrl?: string;
+  status: "pending" | "sent" | "failed";
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NotificationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface NotificationListResponse {
+  notifications: PortalNotification[];
+  meta: NotificationMeta;
 }
 
 export interface NotificationSummary {
   unread_count: number;
-  recent_notifications: PortalNotification[];
   category_counts: Record<string, number>;
+  recent_notifications: Pick<PortalNotification, "_id" | "title" | "message" | "category" | "isRead" | "createdAt">[];
 }
 
+export interface NotificationQueryParams {
+  isRead?: boolean;
+  category?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+// ── Service ───────────────────────────────────────────────────────────────────
 export const notificationService = {
+  // GET /api/vendor/notifications — paginated list with filters
+  getList(params: NotificationQueryParams = {}) {
+    const q = new URLSearchParams();
+    if (params.isRead !== undefined) q.set("isRead", String(params.isRead));
+    if (params.category) q.set("category", params.category);
+    if (params.search) q.set("search", params.search);
+    if (params.page) q.set("page", String(params.page));
+    if (params.limit) q.set("limit", String(params.limit));
+    const qs = q.toString();
+    return apiRequest<{ success: boolean; data: NotificationListResponse }>(
+      `/vendor/notifications${qs ? `?${qs}` : ""}`
+    );
+  },
+
+  // GET /api/vendor/notifications/summary — unread count + category breakdown
   getSummary() {
-    return apiRequest<{ data: NotificationSummary }>("/vendor/notifications/summary");
+    return apiRequest<{ success: boolean; data: NotificationSummary }>(
+      "/vendor/notifications/summary"
+    );
   },
-  getRecent(limit = 20) {
-    return apiRequest<{ data: { notifications: PortalNotification[] } }>(`/vendor/notifications?limit=${limit}`);
-  },
+
+  // PATCH /api/vendor/notifications/:id/read — mark single as read
   markRead(id: string) {
-    return apiRequest<{ data: PortalNotification }>(`/vendor/notifications/${id}/read`, {
-      method: "PATCH",
-    });
+    return apiRequest<{ success: boolean; message: string; data: Partial<PortalNotification> }>(
+      `/vendor/notifications/${id}/read`,
+      { method: "PATCH" }
+    );
   },
+
+  // PATCH /api/vendor/notifications/read-all — mark all as read
   markAllRead() {
-    return apiRequest<{ data: { updated: number } }>("/vendor/notifications/read-all", {
-      method: "PATCH",
-    });
+    return apiRequest<{ success: boolean; message: string; data: null }>(
+      "/vendor/notifications/read-all",
+      { method: "PATCH" }
+    );
   },
 };
