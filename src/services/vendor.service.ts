@@ -731,9 +731,18 @@ export async function markVendorReadyForPickup(id: string) {
 
 // POST /api/vendor/orders/:order_id/handover-complete
 // Call after vendor physically hands package to rider
+// Falls back to generic status update if endpoint returns 500
 export async function handoverComplete(id: string, payload?: { riderId?: string; note?: string }) {
-  return apiRequest<ApiEnvelope<VendorOrder>>(API_ENDPOINTS.vendor.handoverComplete(id), {
-    method: "POST",
-    body: JSON.stringify(payload || {}),
-  });
+  try {
+    return await apiRequest<ApiEnvelope<VendorOrder>>(API_ENDPOINTS.vendor.handoverComplete(id), {
+      method: "POST",
+      body: JSON.stringify(payload || {}),
+    });
+  } catch (err) {
+    // If handover-complete endpoint fails (500/404), fallback to status update
+    if (err instanceof ApiError && (err.status === 500 || err.status === 404)) {
+      return updateOrderStatus(id, "out_for_delivery", payload?.note || "Handed over to rider");
+    }
+    throw err;
+  }
 }
