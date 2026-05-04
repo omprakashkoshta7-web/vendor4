@@ -319,16 +319,16 @@ export default function ProductionPage() {
                 <div className="text-center py-4 text-xs text-gray-400">Loading riders...</div>
               ) : filteredRiders.length > 0 ? (
                 <div className="max-h-48 overflow-y-auto space-y-1.5 rounded-xl border border-gray-200 p-2">
-                  {filteredRiders.map(rider => {
+                  {filteredRiders.map((rider, idx) => {
                     const isSelected = selectedRider?._id === rider._id;
                     // Resolve name and phone from multiple possible field names
                     const riderName = rider.name || rider.fullName || rider.riderName || "";
                     const riderPhone = rider.phone || rider.phoneNumber || "";
                     const riderVehicle = rider.vehicleType || rider.vehicle || "";
-                    const displayName = riderName || riderPhone || rider._id.slice(-6);
+                    const displayName = riderName || riderPhone || (rider._id ? String(rider._id).slice(-6) : `Rider ${idx + 1}`);
                     return (
                       <button
-                        key={rider._id}
+                        key={rider._id || idx}
                         type="button"
                         onClick={() => setSelectedRider(isSelected ? null : rider)}
                         className="w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition"
