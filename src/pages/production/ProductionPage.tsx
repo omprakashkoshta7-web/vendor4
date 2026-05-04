@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle, Clock, Package, ShieldCheck, Truck, RefreshCw, X } from "lucide-react";
+import { CheckCircle, Clock, Package, ShieldCheck, Truck, RefreshCw, X, Search, Star, Bike } from "lucide-react";
 import LoadingState from "../../components/ui/LoadingState";
 import { COLORS } from "../../utils/colors";
 import {
@@ -8,6 +8,8 @@ import {
   markVendorReadyForPickup,
   startVendorProduction,
   handoverComplete,
+  getAvailableDeliveryPartners,
+  type DeliveryPartner,
 } from "../../services/vendor.service";
 import type { VendorOrder } from "../../types/vendor";
 import VendorMetricCard from "../../components/ui/VendorMetricCard";
@@ -23,9 +25,13 @@ export default function ProductionPage() {
 
   // Handover modal state
   const [handoverOrder, setHandoverOrder] = useState<VendorOrder | null>(null);
-  const [handoverRiderId, setHandoverRiderId] = useState("");
   const [handoverNote, setHandoverNote] = useState("");
   const [handoverBusy, setHandoverBusy] = useState(false);
+  // Rider picker state
+  const [riders, setRiders] = useState<DeliveryPartner[]>([]);
+  const [ridersLoading, setRidersLoading] = useState(false);
+  const [riderSearch, setRiderSearch] = useState("");
+  const [selectedRider, setSelectedRider] = useState<DeliveryPartner | null>(null);
   const loadOrders = async () => {
     try {
       setLoading(true);
@@ -46,6 +52,31 @@ export default function ProductionPage() {
   useEffect(() => {
     void loadOrders();
   }, []);
+
+  // Load available riders when handover modal opens
+  const openHandoverModal = async (order: VendorOrder) => {
+    setHandoverOrder(order);
+    setSelectedRider(null);
+    setRiderSearch("");
+    setHandoverNote("");
+    setRidersLoading(true);
+    try {
+      const res = await getAvailableDeliveryPartners({ limit: 20 });
+      setRiders(res.data || []);
+    } catch {
+      setRiders([]);
+    } finally {
+      setRidersLoading(false);
+    }
+  };
+
+  // Filter riders by search
+  const filteredRiders = riderSearch.trim()
+    ? riders.filter(r =>
+        r.name.toLowerCase().includes(riderSearch.toLowerCase()) ||
+        r.phone?.includes(riderSearch)
+      )
+    : riders;
 
   const filteredOrders = useMemo(() => {
     return filter === "all" ? orders : orders.filter((order) => order.status === filter);
@@ -226,7 +257,7 @@ export default function ProductionPage() {
 
                   {order.status === "ready_for_pickup" ? (
                     <button
-                      onClick={() => setHandoverOrder(order)}
+                      onClick={() => void openHandoverModal(order)}
                       className="flex-1 flex items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-sm font-bold text-white transition"
                       style={{ backgroundColor: COLORS.primary }}>
                       <Truck size={14} /> Handover to Rider
@@ -255,6 +286,8 @@ export default function ProductionPage() {
               <h3 className="text-lg font-bold text-gray-900">Handover to Rider</h3>
               <button onClick={() => setHandoverOrder(null)}><X size={18} className="text-gray-400" /></button>
             </div>
+
+            {/* Order info */}
             <div className="p-3 rounded-xl border mb-4"
               style={{ backgroundColor: COLORS.infoBg, borderColor: COLORS.infoBorder }}>
               <p className="text-xs font-bold" style={{ color: COLORS.info }}>
@@ -264,22 +297,92 @@ export default function ProductionPage() {
                 Confirm physical handover of package to delivery rider.
               </p>
             </div>
-            <div className="space-y-4 mb-5">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Rider ID (optional)</label>
-                <input value={handoverRiderId} onChange={e => setHandoverRiderId(e.target.value)}
-                  placeholder="Enter rider ID if known"
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:border-gray-900 transition font-mono" />
+
+            {/* Rider Search + Dropdown */}
+            <div className="mb-4">
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">
+                Select Rider <span className="text-gray-400 font-normal normal-case">(optional)</span>
+              </label>
+              <div className="relative mb-2">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  value={riderSearch}
+                  onChange={e => setRiderSearch(e.target.value)}
+                  placeholder="Search by name or phone..."
+                  className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-gray-900 transition"
+                />
               </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Note (optional)</label>
-                <textarea value={handoverNote} onChange={e => setHandoverNote(e.target.value)}
-                  placeholder="Any handover notes..."
-                  className="w-full h-20 rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition resize-none" />
-              </div>
+
+              {ridersLoading ? (
+                <div className="text-center py-4 text-xs text-gray-400">Loading riders...</div>
+              ) : filteredRiders.length > 0 ? (
+                <div className="max-h-48 overflow-y-auto space-y-1.5 rounded-xl border border-gray-200 p-2">
+                  {filteredRiders.map(rider => (
+                    <button
+                      key={rider._id}
+                      onClick={() => setSelectedRider(selectedRider?._id === rider._id ? null : rider)}
+                      className="w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition"
+                      style={{
+                        backgroundColor: selectedRider?._id === rider._id ? `${COLORS.primary}12` : "transparent",
+                        border: selectedRider?._id === rider._id ? `1.5px solid ${COLORS.primary}` : "1.5px solid transparent",
+                      }}>
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                        style={{ backgroundColor: COLORS.primary }}>
+                        {rider.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-gray-900 truncate">{rider.name}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {rider.phone && <span className="text-xs text-gray-500">{rider.phone}</span>}
+                          {rider.vehicleType && (
+                            <span className="text-xs px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-600 flex items-center gap-1">
+                              <Bike size={10} /> {rider.vehicleType}
+                            </span>
+                          )}
+                          {rider.rating != null && (
+                            <span className="text-xs text-gray-500 flex items-center gap-0.5">
+                              <Star size={10} className="text-yellow-400" /> {rider.rating.toFixed(1)}
+                            </span>
+                          )}
+                          {rider.totalTrips != null && (
+                            <span className="text-xs text-gray-400">{rider.totalTrips} trips</span>
+                          )}
+                        </div>
+                      </div>
+                      {selectedRider?._id === rider._id && (
+                        <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+                          style={{ backgroundColor: COLORS.primary }}>
+                          <div className="w-2 h-2 rounded-full bg-white" />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-3 text-xs text-gray-400 border border-gray-200 rounded-xl">
+                  {riderSearch ? "No riders match your search" : "No riders available"}
+                </div>
+              )}
+
+              {selectedRider && (
+                <p className="text-xs mt-2 font-semibold" style={{ color: COLORS.success }}>
+                  ✓ Selected: {selectedRider.name}
+                </p>
+              )}
             </div>
+
+            {/* Note */}
+            <div className="mb-5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">
+                Note <span className="text-gray-400 font-normal normal-case">(optional)</span>
+              </label>
+              <textarea value={handoverNote} onChange={e => setHandoverNote(e.target.value)}
+                placeholder="Any handover notes..."
+                className="w-full h-16 rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition resize-none" />
+            </div>
+
             <div className="flex gap-3">
-              <button onClick={() => { setHandoverOrder(null); setHandoverRiderId(""); setHandoverNote(""); }}
+              <button onClick={() => { setHandoverOrder(null); setSelectedRider(null); setHandoverNote(""); setRiderSearch(""); }}
                 className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
                 Cancel
               </button>
@@ -288,20 +391,15 @@ export default function ProductionPage() {
                 onClick={async () => {
                   setHandoverBusy(true);
                   try {
-                    // Try handover-complete endpoint first
-                    // If backend returns 500/404, we still remove from production queue locally
-                    // because vendor's job is done at ready_for_pickup stage
                     await handoverComplete(handoverOrder._id, {
-                      riderId: handoverRiderId || undefined,
+                      riderId: selectedRider?._id || undefined,
                       note: handoverNote || undefined,
-                    }).catch(() => {
-                      // Silently ignore backend errors — vendor's action is complete
-                    });
-                    // Remove from production queue regardless of backend response
+                    }).catch(() => {});
                     setOrders(cur => cur.filter(o => o._id !== handoverOrder._id));
                     setHandoverOrder(null);
-                    setHandoverRiderId("");
+                    setSelectedRider(null);
                     setHandoverNote("");
+                    setRiderSearch("");
                   } catch (err) {
                     setError(err instanceof Error ? err.message : "Failed to complete handover");
                     setHandoverOrder(null);

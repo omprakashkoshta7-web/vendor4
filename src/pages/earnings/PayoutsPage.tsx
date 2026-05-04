@@ -292,9 +292,9 @@ export default function PayoutsPage() {
             <div className="w-12 h-12 rounded-2xl mx-auto mb-3 flex items-center justify-center bg-gray-100">
               <FileText size={22} className="text-gray-400" />
             </div>
-            <p className="text-gray-500 font-semibold">No payout records found</p>
+            <p className="text-gray-500 font-semibold">No payout records yet</p>
             <p className="text-xs text-gray-400 mt-1">
-              {filter !== "all" ? `No ${filter} payouts` : "Payouts will appear here once processed"}
+              {filter !== "all" ? `No ${filter} payouts` : "Payout records will appear here once processed by admin"}
             </p>
           </div>
         )}

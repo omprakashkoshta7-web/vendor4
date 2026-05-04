@@ -751,9 +751,29 @@ export async function markVendorReadyForPickup(id: string) {
   }).catch(() => markOrderReady(id)); // fallback to alias if 404
 }
 
-// POST /api/vendor/orders/:order_id/handover-complete
+// GET /api/vendor/delivery-partners/available
+export interface DeliveryPartner {
+  _id: string;
+  name: string;
+  phone?: string;
+  vehicleType?: string;
+  zoneAssignments?: string[];
+  rating?: number;
+  totalTrips?: number;
+  isAvailable?: boolean;
+}
+
+export async function getAvailableDeliveryPartners(params?: { search?: string; limit?: number }) {
+  const q = new URLSearchParams();
+  if (params?.search) q.set("search", params.search);
+  if (params?.limit) q.set("limit", String(params.limit));
+  const qs = q.toString();
+  return apiRequest<ApiEnvelope<DeliveryPartner[]>>(
+    `${API_ENDPOINTS.vendor.deliveryPartnersAvailable}${qs ? `?${qs}` : ""}`
+  );
+}
 // Call after vendor physically hands package to rider
-// Falls back to generic status update if endpoint returns 500
+// POST /api/vendor/orders/:order_id/handover-complete
 export async function handoverComplete(id: string, payload?: { riderId?: string; note?: string }) {
   try {
     return await apiRequest<ApiEnvelope<VendorOrder>>(API_ENDPOINTS.vendor.handoverComplete(id), {

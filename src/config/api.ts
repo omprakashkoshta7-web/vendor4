@@ -106,6 +106,9 @@ export const API_ENDPOINTS = {
     ordersScore: "/vendor/orders/score",
     ordersClosure: "/vendor/orders/closure",
 
+    // Delivery Partners
+    deliveryPartnersAvailable: "/vendor/delivery-partners/available",
+
     // Support Tickets (primary paths)
     supportTickets: "/vendor/support/tickets",
     supportTicketById: (id: string) => `/vendor/support/tickets/${id}`,

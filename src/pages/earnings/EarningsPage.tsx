@@ -223,8 +223,9 @@ export default function EarningsPage() {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[220px] flex items-center justify-center text-gray-400 text-sm">
-              No store earnings data yet
+            <div className="h-[220px] flex flex-col items-center justify-center text-center gap-2">
+              <p className="text-sm font-semibold text-gray-500">No delivered orders yet</p>
+              <p className="text-xs text-gray-400">Earnings appear once orders are delivered</p>
             </div>
           )}
         </div>
@@ -261,7 +262,7 @@ export default function EarningsPage() {
                 </div>
               </>
             ) : (
-              <p className="text-sm text-gray-400 text-center py-6">No store earnings data</p>
+              <p className="text-sm text-gray-400 text-center py-6">No delivered orders yet — earnings appear once orders are delivered</p>
             )}
           </div>
         </div>
