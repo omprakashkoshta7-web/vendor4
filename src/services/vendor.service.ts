@@ -754,13 +754,18 @@ export async function markVendorReadyForPickup(id: string) {
 // GET /api/vendor/delivery-partners/available
 export interface DeliveryPartner {
   _id: string;
-  name: string;
+  name?: string;
+  fullName?: string;       // alternate field name
+  riderName?: string;      // alternate field name
   phone?: string;
+  phoneNumber?: string;    // alternate field name
   vehicleType?: string;
+  vehicle?: string;        // alternate field name
   zoneAssignments?: string[];
   rating?: number;
   totalTrips?: number;
   isAvailable?: boolean;
+  [key: string]: unknown;  // allow any extra fields
 }
 
 export async function getAvailableDeliveryPartners(params?: { search?: string; limit?: number }) {

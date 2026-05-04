@@ -72,10 +72,12 @@ export default function ProductionPage() {
 
   // Filter riders by search
   const filteredRiders = riderSearch.trim()
-    ? riders.filter(r =>
-        r.name.toLowerCase().includes(riderSearch.toLowerCase()) ||
-        r.phone?.includes(riderSearch)
-      )
+    ? riders.filter(r => {
+        const name = r.name || r.fullName || r.riderName || "";
+        const phone = r.phone || r.phoneNumber || "";
+        const s = riderSearch.toLowerCase();
+        return name.toLowerCase().includes(s) || phone.includes(riderSearch);
+      })
     : riders;
 
   const filteredOrders = useMemo(() => {
@@ -319,6 +321,11 @@ export default function ProductionPage() {
                 <div className="max-h-48 overflow-y-auto space-y-1.5 rounded-xl border border-gray-200 p-2">
                   {filteredRiders.map(rider => {
                     const isSelected = selectedRider?._id === rider._id;
+                    // Resolve name and phone from multiple possible field names
+                    const riderName = rider.name || rider.fullName || rider.riderName || "";
+                    const riderPhone = rider.phone || rider.phoneNumber || "";
+                    const riderVehicle = rider.vehicleType || rider.vehicle || "";
+                    const displayName = riderName || riderPhone || rider._id.slice(-6);
                     return (
                       <button
                         key={rider._id}
@@ -338,20 +345,20 @@ export default function ProductionPage() {
                         </div>
                         <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
                           style={{ backgroundColor: isSelected ? COLORS.primary : "#94a3b8" }}>
-                          {(rider.name || "?").charAt(0).toUpperCase()}
+                          {displayName.charAt(0).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-gray-900 truncate">{rider.name || "Unknown"}</p>
+                          <p className="text-sm font-bold text-gray-900 truncate">{displayName}</p>
                           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                            {rider.phone && <span className="text-xs text-gray-500">{rider.phone}</span>}
-                            {rider.vehicleType && (
+                            {riderPhone && riderPhone !== displayName && <span className="text-xs text-gray-500">{riderPhone}</span>}
+                            {riderVehicle && (
                               <span className="text-xs px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-600 flex items-center gap-1">
-                                <Bike size={10} /> {rider.vehicleType}
+                                <Bike size={10} /> {riderVehicle}
                               </span>
                             )}
                             {rider.rating != null && (
                               <span className="text-xs text-gray-500 flex items-center gap-0.5">
-                                <Star size={10} className="text-yellow-400" /> {rider.rating.toFixed(1)}
+                                <Star size={10} className="text-yellow-400" /> {Number(rider.rating).toFixed(1)}
                               </span>
                             )}
                             {rider.totalTrips != null && (
