@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import LoadingState from "../../components/ui/LoadingState";
 import { COLORS } from "../../utils/colors";
-import { getLegalDocs, uploadLegalDocs, getAgreement } from "../../services/vendor.service";
+import { getLegalDocs, uploadLegalDocs, uploadLegalDocsFormData, getAgreement } from "../../services/vendor.service";
 
 // ─── Types ────────────────────────────────────────────────
 interface LegalDocs {
@@ -29,13 +29,14 @@ interface Agreement {
 // ─── Doc Card ─────────────────────────────────────────────
 function DocCard({
   title, description, numberValue, fileUrl,
-  onNumberChange, onFileChange, uploading, editMode,
+  onNumberChange, onFileChange, uploading, editMode, selectedFile,
 }: {
   title: string; description: string;
   numberValue: string; fileUrl?: string;
   onNumberChange: (v: string) => void;
   onFileChange: (file: File) => void;
   uploading: boolean; editMode: boolean;
+  selectedFile?: File;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const hasFile = Boolean(fileUrl);
@@ -54,11 +55,9 @@ function DocCard({
           </div>
         </div>
         <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${
-          hasFile
-            ? "bg-green-50 text-green-700"
-            : "bg-yellow-50 text-yellow-700"
+          selectedFile ? "bg-blue-50 text-blue-700" : hasFile ? "bg-green-50 text-green-700" : "bg-yellow-50 text-yellow-700"
         }`}>
-          {hasFile ? "Uploaded" : "Pending"}
+          {selectedFile ? "Ready to upload" : hasFile ? "Uploaded" : "Pending"}
         </span>
       </div>
 
@@ -96,10 +95,14 @@ function DocCard({
           <button
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-gray-200 text-sm font-semibold text-gray-600 hover:border-gray-400 hover:bg-gray-50 transition disabled:opacity-50"
-          >
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed text-sm font-semibold transition disabled:opacity-50"
+            style={{
+              borderColor: selectedFile ? COLORS.info : "#e5e7eb",
+              backgroundColor: selectedFile ? COLORS.infoBg : "transparent",
+              color: selectedFile ? COLORS.info : "#4b5563",
+            }}>
             <Upload size={14} />
-            {uploading ? "Uploading..." : "Upload Document (PDF/Image)"}
+            {uploading ? "Uploading..." : selectedFile ? `📄 ${selectedFile.name}` : "Upload Document (PDF/Image)"}
           </button>
         </div>
       )}
@@ -162,27 +165,28 @@ export default function LegalPage() {
 
   useEffect(() => { void loadData(); }, []);
 
-  // API 2: POST /api/vendor/org/legal
+  // API 2: POST /api/vendor/org/legal — multipart/form-data
   const handleSave = async () => {
     try {
       setSaving(true);
       setError("");
 
-      // Build FormData for file upload
-      const formData = new FormData();
-      if (gstNumber) formData.append("gstNumber", gstNumber);
-      if (panNumber) formData.append("panNumber", panNumber);
-      if (companyRegNumber) formData.append("companyRegistrationNumber", companyRegNumber);
-      if (files.gstCertificate) formData.append("gstCertificate", files.gstCertificate);
-      if (files.panCard) formData.append("panCard", files.panCard);
-      if (files.companyRegistrationCertificate) formData.append("companyRegistrationCertificate", files.companyRegistrationCertificate);
+      const hasFiles = Object.keys(files).length > 0;
 
-      // Use JSON payload (backend also accepts JSON for number fields)
-      await uploadLegalDocs({
-        gstNumber,
-        panNumber,
-        companyRegistrationNumber: companyRegNumber,
-      });
+      if (hasFiles) {
+        // Use multipart/form-data when files are selected
+        const formData = new FormData();
+        if (gstNumber) formData.append("gstNumber", gstNumber);
+        if (panNumber) formData.append("panNumber", panNumber);
+        if (companyRegNumber) formData.append("companyRegistrationNumber", companyRegNumber);
+        if (files.gstCertificate) formData.append("gstCertificate", files.gstCertificate);
+        if (files.panCard) formData.append("panCard", files.panCard);
+        if (files.companyRegistrationCertificate) formData.append("companyRegistrationCertificate", files.companyRegistrationCertificate);
+        await uploadLegalDocsFormData(formData);
+      } else {
+        // JSON for numbers-only update
+        await uploadLegalDocs({ gstNumber, panNumber, companyRegistrationNumber: companyRegNumber });
+      }
 
       setEditMode(false);
       setFiles({});
@@ -348,6 +352,7 @@ export default function LegalPage() {
           onFileChange={(file) => setFiles((prev) => ({ ...prev, gstCertificate: file }))}
           uploading={saving}
           editMode={editMode}
+          selectedFile={files.gstCertificate}
         />
         <DocCard
           title="PAN Card"
@@ -358,6 +363,7 @@ export default function LegalPage() {
           onFileChange={(file) => setFiles((prev) => ({ ...prev, panCard: file }))}
           uploading={saving}
           editMode={editMode}
+          selectedFile={files.panCard}
         />
         <DocCard
           title="Company Registration"
@@ -368,6 +374,7 @@ export default function LegalPage() {
           onFileChange={(file) => setFiles((prev) => ({ ...prev, companyRegistrationCertificate: file }))}
           uploading={saving}
           editMode={editMode}
+          selectedFile={files.companyRegistrationCertificate}
         />
       </div>
 

@@ -118,6 +118,28 @@ export async function uploadLegalDocs(payload: any) {
   });
 }
 
+// Multipart upload — files + text fields
+export async function uploadLegalDocsFormData(formData: FormData) {
+  const token = getAuthToken();
+  const headers = new Headers();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  // Do NOT set Content-Type — browser sets it with boundary automatically
+
+  const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.vendor.legal}`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = payload?.message || `HTTP ${response.status}: ${response.statusText}`;
+    throw new ApiError(message, response.status);
+  }
+  if (payload == null) throw new ApiError("Empty response", response.status || 500);
+  return payload as ApiEnvelope<any>;
+}
+
 export async function getAgreement() {
   return apiRequest<ApiEnvelope<any>>(API_ENDPOINTS.vendor.agreement);
 }
