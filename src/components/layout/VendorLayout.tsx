@@ -92,6 +92,7 @@ export default function VendorLayout() {
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [notifications, setNotifications] = useState<PortalNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [markingAllRead, setMarkingAllRead] = useState(false);
 
   useEffect(() => {
     const currentSession = getVendorSession();
@@ -162,6 +163,32 @@ export default function VendorLayout() {
     value
       ? new Date(value).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
       : "";
+
+  const handleMarkAllRead = async () => {
+    if (markingAllRead || unreadCount === 0) return;
+    setMarkingAllRead(true);
+    try {
+      await notificationService.markAllRead();
+      setNotifications(cur => cur.map(n => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+    } catch { /* silent */ }
+    finally { setMarkingAllRead(false); }
+  };
+
+  const handleMarkOneRead = async (id: string) => {
+    try {
+      await notificationService.markRead(id);
+      setNotifications(cur => cur.map(n => n._id === id ? { ...n, isRead: true } : n));
+      setUnreadCount(cur => Math.max(0, cur - 1));
+    } catch { /* silent */ }
+  };
+
+  const getCategoryIcon = (category: string) => {
+    const map: Record<string, string> = {
+      order: "📦", payment: "💰", system: "⚙️", alert: "🔔", support: "🎧",
+    };
+    return map[category?.toLowerCase()] || "🔔";
+  };
 
   if (!session) {
     return (
@@ -368,40 +395,93 @@ export default function VendorLayout() {
                 </button>
 
                 {showNotifications && (
-                  <div className="absolute right-0 top-full mt-2 w-80 rounded-2xl bg-white shadow-xl border border-slate-200 z-50">
-                    <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-                      <h3 className="font-bold text-sm text-slate-900">Notifications</h3>
-                      <button 
-                        onClick={() => setShowNotifications(false)}
-                        className="p-1 hover:bg-slate-100 rounded-lg transition"
-                      >
-                        <X size={16} className="text-slate-500" />
-                      </button>
+                  <div className="absolute right-0 top-full mt-2 w-96 rounded-2xl bg-white shadow-2xl border border-slate-200 z-50 overflow-hidden">
+                    {/* Header */}
+                    <div className="px-4 py-3.5 border-b border-slate-100 flex items-center justify-between bg-white">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-sm text-slate-900">Notifications</h3>
+                        {unreadCount > 0 && (
+                          <span className="rounded-full bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 leading-none">
+                            {unreadCount}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {unreadCount > 0 && (
+                          <button
+                            onClick={() => void handleMarkAllRead()}
+                            disabled={markingAllRead}
+                            className="text-xs font-semibold px-2.5 py-1.5 rounded-lg transition hover:bg-slate-100 disabled:opacity-50"
+                            style={{ color: "#2d3f55" }}>
+                            {markingAllRead ? "Marking..." : "Mark all read"}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setShowNotifications(false)}
+                          className="p-1.5 hover:bg-slate-100 rounded-lg transition">
+                          <X size={15} className="text-slate-500" />
+                        </button>
+                      </div>
                     </div>
+
+                    {/* Notification List */}
                     {notifications.length ? (
-                      <div className="max-h-96 overflow-y-auto p-2">
-                        {notifications.map((notification) => (
-                          <div key={notification._id} className="rounded-xl px-3 py-3 hover:bg-slate-50 transition">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <p className="text-sm font-semibold text-slate-900">{notification.title}</p>
-                                <p className="mt-1 text-xs leading-5 text-slate-600">{notification.message}</p>
-                                <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-slate-400">
-                                  {notification.category} • {formatTimestamp(notification.createdAt)}
+                      <div className="max-h-[420px] overflow-y-auto divide-y divide-slate-50">
+                        {notifications.map((n) => (
+                          <div
+                            key={n._id}
+                            onClick={() => { if (!n.isRead) void handleMarkOneRead(n._id); }}
+                            className={`flex items-start gap-3 px-4 py-3.5 transition cursor-pointer group ${
+                              n.isRead ? "bg-white hover:bg-slate-50" : "bg-blue-50/60 hover:bg-blue-50"
+                            }`}>
+                            {/* Category icon */}
+                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0 ${
+                              n.isRead ? "bg-slate-100" : "bg-white shadow-sm"
+                            }`}>
+                              {getCategoryIcon(n.category)}
+                            </div>
+
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
+                                <p className={`text-sm leading-snug ${n.isRead ? "font-medium text-slate-700" : "font-bold text-slate-900"}`}>
+                                  {n.title}
                                 </p>
+                                {!n.isRead && (
+                                  <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1" />
+                                )}
                               </div>
-                              {!notification.isRead && <span className="mt-1 h-2.5 w-2.5 rounded-full bg-red-500" />}
+                              <p className="mt-0.5 text-xs text-slate-500 leading-relaxed line-clamp-2">
+                                {n.message}
+                              </p>
+                              <div className="mt-1.5 flex items-center gap-2">
+                                <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-500">
+                                  {n.category}
+                                </span>
+                                <span className="text-[10px] text-slate-400">
+                                  {formatTimestamp(n.createdAt)}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="p-8 text-center">
-                        <div className="mx-auto w-12 h-12 rounded-full bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center mb-3">
-                          <Bell size={24} className="text-purple-600" />
+                      <div className="py-12 text-center px-6">
+                        <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center mb-4">
+                          <Bell size={22} className="text-slate-400" />
                         </div>
-                        <p className="text-sm font-medium text-gray-700">No notifications yet</p>
-                        <p className="text-xs text-gray-500 mt-1">Assigned jobs and status updates will appear here.</p>
+                        <p className="text-sm font-semibold text-slate-700">All caught up!</p>
+                        <p className="text-xs text-slate-400 mt-1">Assigned jobs and status updates will appear here.</p>
+                      </div>
+                    )}
+
+                    {/* Footer */}
+                    {notifications.length > 0 && (
+                      <div className="px-4 py-3 border-t border-slate-100 bg-slate-50 text-center">
+                        <p className="text-xs text-slate-400">
+                          {unreadCount > 0 ? `${unreadCount} unread` : "All notifications read"} • Click to mark as read
+                        </p>
                       </div>
                     )}
                   </div>
