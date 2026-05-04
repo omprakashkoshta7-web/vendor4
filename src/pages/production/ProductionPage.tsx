@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle, Clock, Package, ShieldCheck, Truck, RefreshCw } from "lucide-react";
+import { CheckCircle, Clock, Package, ShieldCheck, Truck, RefreshCw, X } from "lucide-react";
 import LoadingState from "../../components/ui/LoadingState";
 import { COLORS } from "../../utils/colors";
 import {
@@ -7,6 +7,7 @@ import {
   markVendorQcPending,
   markVendorReadyForPickup,
   startVendorProduction,
+  handoverComplete,
 } from "../../services/vendor.service";
 import type { VendorOrder } from "../../types/vendor";
 import VendorMetricCard from "../../components/ui/VendorMetricCard";
@@ -19,6 +20,12 @@ export default function ProductionPage() {
   const [error, setError] = useState("");
   const [filter, setFilter] = useState<ProductionFilter>("all");
   const [busyId, setBusyId] = useState("");
+
+  // Handover modal state
+  const [handoverOrder, setHandoverOrder] = useState<VendorOrder | null>(null);
+  const [handoverRiderId, setHandoverRiderId] = useState("");
+  const [handoverNote, setHandoverNote] = useState("");
+  const [handoverBusy, setHandoverBusy] = useState(false);
 
   const loadOrders = async () => {
     try {

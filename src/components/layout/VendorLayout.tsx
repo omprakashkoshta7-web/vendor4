@@ -7,6 +7,7 @@ import {
   ChevronDown,
   ClipboardList,
   CreditCard,
+  FileText,
   HeadphonesIcon,
   LayoutDashboard,
   LogOut,
@@ -60,6 +61,7 @@ const navGroups = [
     items: [
       { to: "/score", icon: Star, label: "Vendor Score", permissions: ["view_all"] },
       { to: "/org", icon: Building2, label: "Org Profile", permissions: ["org_settings", "view_all"] },
+      { to: "/legal", icon: FileText, label: "Legal Docs", permissions: ["org_settings", "view_all"] },
       { to: "/support", icon: HeadphonesIcon, label: "Support", permissions: ["view_all"] },
     ],
   },
@@ -71,12 +73,13 @@ const routeMeta = [
   { match: "/production", title: "Production", caption: "Move accepted jobs through production states." },
   { match: "/stores", title: "Stores", caption: "Store availability and capacity synced with backend." },
   { match: "/staff", title: "Staff", caption: "Manage vendor team and activation status." },
-  { match: "/earnings", title: "Earnings", caption: "Finance pages remain UI-only until finance APIs are wired." },
-  { match: "/closure", title: "Closure", caption: "Closure view remains UI-only for now." },
-  { match: "/payouts", title: "Payouts", caption: "Payout view remains UI-only for now." },
-  { match: "/score", title: "Vendor Score", caption: "Score page remains UI-only for now." },
-  { match: "/org", title: "Org Profile", caption: "Vendor organization profile now uses backend data." },
-  { match: "/support", title: "Support", caption: "Support page remains UI-only for now." },
+  { match: "/earnings", title: "Earnings", caption: "Revenue, wallet balance and store performance." },
+  { match: "/closure", title: "Closure", caption: "Daily, weekly and monthly earning closures." },
+  { match: "/payouts", title: "Payouts", caption: "Payout history, schedule and wallet balance." },
+  { match: "/score", title: "Vendor Score", caption: "Performance score, metrics and order closure." },
+  { match: "/org", title: "Org Profile", caption: "Vendor organization profile and bank details." },
+  { match: "/legal", title: "Legal Documents", caption: "GST, PAN, registration documents and agreement status." },
+  { match: "/support", title: "Support", caption: "Raise and manage support tickets." },
 ];
 
 export default function VendorLayout() {

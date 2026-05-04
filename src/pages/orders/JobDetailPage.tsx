@@ -16,6 +16,10 @@ import {
   uploadQcImages,
   uploadQcImagesMultipart,
   markOrderReady,
+  startVendorProduction,
+  markVendorQcPending,
+  markVendorReadyForPickup,
+  handoverComplete,
 } from "../../services/vendor.service";
 import type { VendorOrder } from "../../types/vendor";
 
@@ -60,6 +64,11 @@ export default function JobDetailPage() {
   const [qcFiles, setQcFiles] = useState<File[]>([]);
   const [qcUploadMode, setQcUploadMode] = useState<"url" | "file">("file");
 
+  // Handover modal
+  const [showHandoverModal, setShowHandoverModal] = useState(false);
+  const [handoverRiderId, setHandoverRiderId] = useState("");
+  const [handoverNote, setHandoverNote] = useState("");
+
   // API 2: GET /api/vendor/orders/:id
   const loadOrder = async () => {
     try {
@@ -85,6 +94,7 @@ export default function JobDetailPage() {
   const canStartProduction = order?.status === "vendor_accepted";
   const canMarkQc = order?.status === "in_production";
   const canMarkReady = order?.status === "qc_pending";
+  const canHandover = order?.status === "ready_for_pickup";
   const isTerminal = ["delivered", "cancelled"].includes(order?.status || "");
 
   // API 3: POST /api/vendor/orders/:id/accept
@@ -305,9 +315,17 @@ export default function JobDetailPage() {
               </>
             )}
 
-            {/* API 5: Start Production */}
+            {/* API 5: Start Production — PATCH /start-production */}
             {canStartProduction && (
-              <button onClick={() => void handleStatusUpdate("in_production", "Production started")}
+              <button onClick={async () => {
+                setBusyAction("in_production");
+                try {
+                  const res = await startVendorProduction(order!._id);
+                  setOrder(res.data);
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : "Failed to start production");
+                } finally { setBusyAction(""); }
+              }}
                 disabled={busyAction === "in_production"}
                 className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition disabled:opacity-60"
                 style={{ backgroundColor: "#8b5cf6" }}>
@@ -316,7 +334,7 @@ export default function JobDetailPage() {
               </button>
             )}
 
-            {/* API 6: QC Upload */}
+            {/* API 6: QC Upload + Mark QC Pending — PATCH /qc-pending */}
             {canMarkQc && (
               <>
                 <button onClick={() => setShowQcModal(true)}
@@ -324,7 +342,15 @@ export default function JobDetailPage() {
                   style={{ backgroundColor: "#fffbeb", color: "#f59e0b" }}>
                   <Camera size={15} /> Upload QC Images
                 </button>
-                <button onClick={() => void handleStatusUpdate("qc_pending", "QC review pending")}
+                <button onClick={async () => {
+                  setBusyAction("qc_pending");
+                  try {
+                    const res = await markVendorQcPending(order!._id);
+                    setOrder(res.data);
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : "Failed to mark QC pending");
+                  } finally { setBusyAction(""); }
+                }}
                   disabled={busyAction === "qc_pending"}
                   className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition disabled:opacity-60"
                   style={{ backgroundColor: "#f59e0b" }}>
@@ -341,6 +367,15 @@ export default function JobDetailPage() {
                 style={{ backgroundColor: COLORS.success }}>
                 <Truck size={15} />
                 {busyAction === "ready" ? "Updating..." : "Ready for Pickup"}
+              </button>
+            )}
+
+            {/* Handover Complete — POST /handover-complete */}
+            {canHandover && (
+              <button onClick={() => setShowHandoverModal(true)}
+                className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition"
+                style={{ backgroundColor: COLORS.primary }}>
+                <Truck size={15} /> Handover to Rider
               </button>
             )}
           </div>
@@ -586,6 +621,74 @@ export default function JobDetailPage() {
                 style={{ backgroundColor: "#f59e0b" }}>
                 <Upload size={14} />
                 {busyAction === "qc" ? "Uploading..." : "Upload QC Images"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Handover Complete Modal — POST /handover-complete */}
+      {showHandoverModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl my-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Handover to Rider</h3>
+              <button onClick={() => setShowHandoverModal(false)}><X size={18} className="text-gray-400" /></button>
+            </div>
+            <div className="p-3 rounded-xl border mb-4"
+              style={{ backgroundColor: COLORS.infoBg, borderColor: COLORS.infoBorder }}>
+              <p className="text-xs font-bold" style={{ color: COLORS.info }}>
+                Confirm that the package has been physically handed over to the delivery rider.
+              </p>
+            </div>
+            <div className="space-y-4 mb-5">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">
+                  Rider ID (optional)
+                </label>
+                <input value={handoverRiderId} onChange={e => setHandoverRiderId(e.target.value)}
+                  placeholder="Enter rider ID if known"
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:border-gray-900 transition font-mono" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">
+                  Note (optional)
+                </label>
+                <textarea value={handoverNote} onChange={e => setHandoverNote(e.target.value)}
+                  placeholder="Any handover notes..."
+                  className="w-full h-20 rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition resize-none" />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setShowHandoverModal(false)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!order) return;
+                  setBusyAction("handover");
+                  try {
+                    const res = await handoverComplete(order._id, {
+                      riderId: handoverRiderId || undefined,
+                      note: handoverNote || undefined,
+                    });
+                    setOrder(res.data);
+                    setShowHandoverModal(false);
+                    setHandoverRiderId("");
+                    setHandoverNote("");
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : "Failed to complete handover");
+                    setShowHandoverModal(false);
+                  } finally {
+                    setBusyAction("");
+                  }
+                }}
+                disabled={busyAction === "handover"}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white transition disabled:opacity-60"
+                style={{ backgroundColor: COLORS.primary }}>
+                <Truck size={14} />
+                {busyAction === "handover" ? "Confirming..." : "Confirm Handover"}
               </button>
             </div>
           </div>

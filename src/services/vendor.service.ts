@@ -728,3 +728,12 @@ export async function markVendorReadyForPickup(id: string) {
     method: "PATCH",
   }).catch(() => markOrderReady(id)); // fallback to alias if 404
 }
+
+// POST /api/vendor/orders/:order_id/handover-complete
+// Call after vendor physically hands package to rider
+export async function handoverComplete(id: string, payload?: { riderId?: string; note?: string }) {
+  return apiRequest<ApiEnvelope<VendorOrder>>(API_ENDPOINTS.vendor.handoverComplete(id), {
+    method: "POST",
+    body: JSON.stringify(payload || {}),
+  });
+}

@@ -52,6 +52,7 @@ export const API_ENDPOINTS = {
     markReadyForPickup: (id: string) => `/vendor/orders/${id}/ready-for-pickup`,
     qcUpload: (id: string) => `/vendor/orders/${id}/qc-upload`,
     markReady: (id: string) => `/vendor/orders/${id}/ready`,
+    handoverComplete: (id: string) => `/vendor/orders/${id}/handover-complete`,
 
     // Analytics / Dashboard
     dashboard: "/vendor/dashboard",

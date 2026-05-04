@@ -9,6 +9,7 @@ import ClosurePage from "./pages/earnings/ClosurePage";
 import EarningsPage from "./pages/earnings/EarningsPage";
 import PayoutsPage from "./pages/earnings/PayoutsPage";
 import OrgProfilePage from "./pages/org/OrgProfilePage";
+import LegalPage from "./pages/org/LegalPage";
 import JobDetailPage from "./pages/orders/JobDetailPage";
 import JobQueuePage from "./pages/orders/JobQueuePage";
 import VendorScorePage from "./pages/orders/VendorScorePage";
@@ -48,6 +49,7 @@ const App = () => {
           <Route path="dashboard" element={<VendorDashboardPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="org" element={<OrgProfilePage />} />
+          <Route path="legal" element={<LegalPage />} />
           <Route path="stores" element={<StoreListPage />} />
           <Route path="stores/new" element={<CreateStorePage />} />
           <Route path="stores/:id" element={<StoreDetailPage />} />
