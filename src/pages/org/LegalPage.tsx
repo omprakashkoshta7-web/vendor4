@@ -190,10 +190,13 @@ export default function LegalPage() {
         if (files.gstCertificate) formData.append("gstCertificate", files.gstCertificate);
         if (files.panCard) formData.append("panCard", files.panCard);
         if (files.companyRegistrationCertificate) formData.append("companyRegistrationCertificate", files.companyRegistrationCertificate);
-        await uploadLegalDocsFormData(formData);
+        const res = await uploadLegalDocsFormData(formData);
+        // Update docs immediately from response
+        if (res?.data) setDocs(res.data as LegalDocs);
       } else {
         // JSON for numbers-only update
-        await uploadLegalDocs({ gstNumber, panNumber, companyRegistrationNumber: companyRegNumber });
+        const res = await uploadLegalDocs({ gstNumber, panNumber, companyRegistrationNumber: companyRegNumber });
+        if (res?.data) setDocs(res.data as LegalDocs);
       }
 
       setEditMode(false);
