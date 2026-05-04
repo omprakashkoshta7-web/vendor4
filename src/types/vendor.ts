@@ -384,15 +384,15 @@ export interface VendorPayoutSchedule {
 // ── Payout Record — Vendor Service (mapped, last 50, no pagination) ──────────
 // GET /api/vendor/finance/payouts/history  (alias: /api/vendor/payouts/history)
 export interface VendorPayoutRecord {
-  id: string;           // _id mapped
-  amount: number;       // netAmount ?? amount  (net after platform fee)
-  grossAmount: number;  // amount (gross before fee)
-  platformFee: number;  // Platform cut (10%)
-  status: "pending" | "processing" | "paid" | "failed";
-  periodStart: string;
-  periodEnd: string;
+  id: string;              // _id mapped
+  amount: number;          // netAmount — platform fee ke baad (vendor ko milta hai)
+  grossAmount: number;     // total before deductions
+  platformFee: number;     // platform ka cut
+  status: "pending" | "processing" | "transferred" | "failed";
+  periodStart: string | null;
+  periodEnd: string | null;
   createdAt: string;
-  transferredAt: string;
+  transferredAt: string | null;  // actual transfer time (null agar nahi hua)
   notes: string;
 }
 
