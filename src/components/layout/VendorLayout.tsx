@@ -119,19 +119,29 @@ export default function VendorLayout() {
 
     const loadNotifications = async () => {
       try {
-        // Use summary for unread count + category counts
-        const summary = await notificationService.getSummary();
+        // Fetch list and summary in parallel
+        const [listResult, summaryResult] = await Promise.allSettled([
+          notificationService.getList({ limit: 20 }),
+          notificationService.getSummary(),
+        ]);
         if (!active) return;
-        setUnreadCount(summary.data.unread_count || 0);
-        setCategoryCounts(summary.data.category_counts || {});
-        // Use recent_notifications from summary for the panel
-        if (summary.data.recent_notifications?.length) {
-          // Fetch full list for panel display
-          const list = await notificationService.getList({ limit: 20 });
-          if (!active) return;
-          setNotifications(list.data.notifications || []);
-        } else {
-          setNotifications([]);
+
+        // Handle list response
+        if (listResult.status === "fulfilled") {
+          const listData = (listResult.value as any)?.data ?? listResult.value;
+          setNotifications(listData.notifications || []);
+        }
+
+        // Handle summary response
+        if (summaryResult.status === "fulfilled") {
+          const summaryData = (summaryResult.value as any)?.data ?? summaryResult.value;
+          setUnreadCount(summaryData.unread_count || 0);
+          setCategoryCounts(summaryData.category_counts || {});
+        } else if (listResult.status === "fulfilled") {
+          // Fallback: compute unread count from list
+          const listData = (listResult.value as any)?.data ?? listResult.value;
+          const notifs: PortalNotification[] = listData.notifications || [];
+          setUnreadCount(notifs.filter(n => !n.isRead).length);
         }
       } catch {
         // Notification endpoint not available — silent fail
