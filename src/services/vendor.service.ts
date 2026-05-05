@@ -752,9 +752,10 @@ export async function markVendorReadyForPickup(id: string) {
 }
 
 // GET /api/vendor/delivery-partners/available
-// Backend returns: name, phone, vehicleType, zoneAssignments, rating, totalTrips
+// Backend returns: id (not _id), name, phone, vehicleType, zoneAssignments, rating, totalTrips
 export interface DeliveryPartner {
-  _id: string;
+  id?: string;                     // Rider ID (backend uses 'id' not '_id')
+  _id?: string;                    // Fallback for _id
   name: string;                    // Rider name
   phone: string;                   // Phone number
   vehicleType: string;             // bike, scooter, car, etc.
@@ -762,6 +763,8 @@ export interface DeliveryPartner {
   rating: number;                  // Rating (0-5)
   totalTrips: number;              // Total completed trips
   isAvailable?: boolean;           // Optional: availability status
+  email?: string;                  // Optional: rider email
+  isApproved?: boolean;            // Optional: approval status
   [key: string]: unknown;          // Allow extra fields from backend
 }
 

@@ -690,10 +690,12 @@ export default function JobDetailPage() {
                 <div className="max-h-44 overflow-y-auto space-y-1.5 rounded-xl border border-gray-200 p-2">
                   {filteredHandoverRiders.map((rider, idx) => {
                     // Simple comparison: check if this rider is the selected one
+                    // Backend returns 'id' not '_id'
                     const isSelected = selectedHandoverRider === rider || 
                                       (selectedHandoverRider && rider && 
-                                       (selectedHandoverRider._id === rider._id || 
-                                        selectedHandoverRider.phone === rider.phone));
+                                       ((selectedHandoverRider.id && selectedHandoverRider.id === rider.id) || 
+                                        (selectedHandoverRider._id && selectedHandoverRider._id === rider._id) ||
+                                        (selectedHandoverRider.phone && selectedHandoverRider.phone === rider.phone)));
                     
                     // Try to get name from any possible field
                     const riderName = rider.name || (rider as any).fullName || (rider as any).riderName || (rider as any).firstName || "";
@@ -701,7 +703,7 @@ export default function JobDetailPage() {
                     const displayName = riderName.trim() || riderPhone || `Rider ${idx + 1}`;
                     
                     return (
-                      <button key={`rider-${idx}`} type="button"
+                      <button key={`rider-${rider.id || rider._id || idx}`} type="button"
                         onClick={() => {
                           setSelectedHandoverRider(rider);
                         }}
@@ -772,7 +774,7 @@ export default function JobDetailPage() {
                   setBusyAction("handover");
                   try {
                     const res = await handoverComplete(order._id, {
-                      riderId: selectedHandoverRider?._id || undefined,
+                      riderId: selectedHandoverRider?.id || selectedHandoverRider?._id || undefined,
                       note: handoverNote || undefined,
                     });
                     setOrder(res.data);
