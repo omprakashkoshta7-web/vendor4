@@ -417,11 +417,12 @@ export default function ProductionPage() {
                 onClick={async () => {
                   setHandoverBusy(true);
                   try {
-                    const res = await handoverComplete(handoverOrder._id, {
+                    await handoverComplete(handoverOrder._id, {
                       riderId: selectedRider?.id || selectedRider?._id || undefined,
                       note: handoverNote || undefined,
                     });
-                    setOrders(cur => cur.map(o => o._id === handoverOrder._id ? res.data : o));
+                    // Remove the order from the list since it's no longer in production
+                    setOrders(cur => cur.filter(o => o._id !== handoverOrder._id));
                     setHandoverOrder(null);
                     setSelectedRider(null);
                     setHandoverNote("");
