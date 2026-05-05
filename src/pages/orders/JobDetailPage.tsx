@@ -689,16 +689,20 @@ export default function JobDetailPage() {
               ) : filteredHandoverRiders.length > 0 ? (
                 <div className="max-h-44 overflow-y-auto space-y-1.5 rounded-xl border border-gray-200 p-2">
                   {filteredHandoverRiders.map((rider, idx) => {
+                    // Use phone as unique key if _id is missing/duplicate
+                    const riderId = rider._id || rider.phone || `rider-${idx}`;
+                    const selectedId = selectedHandoverRider?._id || selectedHandoverRider?.phone;
+                    
                     // Debug: log rider ID and full object
                     console.log(`🚴 Rider ${idx}:`, {
                       _id: rider._id,
-                      name: rider.name,
                       phone: rider.phone,
-                      selectedId: selectedHandoverRider?._id,
-                      fullRider: rider
+                      riderId: riderId,
+                      selectedId: selectedId,
+                      isSelected: riderId === selectedId
                     });
                     
-                    const isSelected = !!(selectedHandoverRider && selectedHandoverRider._id && rider._id && selectedHandoverRider._id === rider._id);
+                    const isSelected = !!(riderId && selectedId && riderId === selectedId);
                     console.log(`🚴 Rider ${idx} isSelected:`, isSelected);
                     
                     // Try to get name from any possible field
@@ -707,9 +711,9 @@ export default function JobDetailPage() {
                     const displayName = riderName.trim() || riderPhone || `Rider ${idx + 1}`;
                     
                     return (
-                      <button key={`rider-${idx}-${rider._id}`} type="button"
+                      <button key={`rider-${riderId}`} type="button"
                         onClick={() => {
-                          console.log("🚴 Selecting rider:", rider);
+                          console.log("🚴 Selecting rider:", { riderId, displayName });
                           setSelectedHandoverRider(rider);
                         }}
                         className="w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition"
@@ -786,9 +790,14 @@ export default function JobDetailPage() {
                     setShowHandoverModal(false);
                     setSelectedHandoverRider(null);
                     setHandoverNote("");
+                    // Show success message
+                    setError("");
+                    setTimeout(() => {
+                      setError("✅ Handover completed successfully!");
+                      setTimeout(() => setError(""), 3000);
+                    }, 100);
                   } catch (err) {
                     setError(err instanceof Error ? err.message : "Failed to complete handover");
-                    setShowHandoverModal(false);
                   } finally {
                     setBusyAction("");
                   }
