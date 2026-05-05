@@ -92,7 +92,12 @@ export default function JobQueuePage() {
         o.items?.some(i => i.productName?.toLowerCase().includes(s))
       );
     }
-    return list;
+    // Sort by creation date - newest first
+    return list.sort((a, b) => {
+      const dateA = new Date(a.createdAt || 0).getTime();
+      const dateB = new Date(b.createdAt || 0).getTime();
+      return dateB - dateA;
+    });
   }, [orders, filter, searchTerm]);
 
   // API 3: POST /api/vendor/orders/:id/accept
