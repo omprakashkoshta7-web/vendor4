@@ -228,9 +228,13 @@ export default function VendorLayout() {
   const filteredNavGroups = navGroups
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) =>
-        item.permissions.some((permission) => session.permissions.includes(permission))
-      ),
+      items: group.items.filter((item) => {
+        // If permissions are not defined or empty, show all items (Owner access)
+        if (!session.permissions || session.permissions.length === 0) {
+          return true;
+        }
+        return item.permissions.some((permission) => session.permissions.includes(permission));
+      }),
     }))
     .filter((group) => group.items.length > 0);
 

@@ -29,10 +29,12 @@ export default function LoginPage() {
       const sessionData = sessionRes?.data as any;
 
       const portalRole = sessionData?.portalRole || user?.role || "Owner";
-      const permissions: string[] = sessionData?.permissions?.length
-        ? sessionData.permissions
+      // Use backend permissions if available and non-empty, otherwise fall back to OWNER_PERMISSIONS
+      const backendPermissions = sessionData?.permissions ?? sessionData?.user?.permissions;
+      const permissions: string[] = Array.isArray(backendPermissions) && backendPermissions.length > 0
+        ? backendPermissions
         : [...OWNER_PERMISSIONS];
-      const storeScope: string[] = sessionData?.storeScope || [];
+      const storeScope: string[] = sessionData?.storeScope ?? sessionData?.user?.storeScope ?? [];
       const vendorOrgId: string =
         sessionData?.vendorOrgId || user?._id || "vendor";
 
