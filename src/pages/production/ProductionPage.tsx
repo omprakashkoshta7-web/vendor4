@@ -82,8 +82,8 @@ export default function ProductionPage() {
   // Filter riders by search
   const filteredRiders = riderSearch.trim()
     ? riders.filter(r => {
-        const name = (r as any).name || (r as any).fullName || (r as any).riderName || (r as any).displayName || "";
-        const phone = (r as any).phone || (r as any).phoneNumber || (r as any).mobile || "";
+        const name = r.name || "";
+        const phone = r.phone || "";
         const s = riderSearch.toLowerCase();
         return name.toLowerCase().includes(s) || phone.includes(riderSearch);
       })
@@ -327,36 +327,26 @@ export default function ProductionPage() {
               {ridersLoading ? (
                 <div className="text-center py-4 text-xs text-gray-400">Loading riders...</div>
               ) : filteredRiders.length > 0 ? (
-                <div className="max-h-48 overflow-y-auto space-y-1.5 rounded-xl border border-gray-200 p-2">
+                <div className="max-h-44 overflow-y-auto space-y-1.5 rounded-xl border border-gray-200 p-2">
                   {filteredRiders.map((rider, idx) => {
-                    const isSelected = selectedRider?._id === rider._id;
-                    // Try all possible field names from backend
-                    const riderName = (rider as any).name
-                      || (rider as any).fullName
-                      || (rider as any).riderName
-                      || (rider as any).displayName
-                      || (rider as any).userName
-                      || (rider as any).user?.name
-                      || (rider as any).profile?.name
-                      || "";
-                    const riderPhone = (rider as any).phone
-                      || (rider as any).phoneNumber
-                      || (rider as any).mobile
-                      || (rider as any).contactNumber
-                      || (rider as any).user?.phone
-                      || "";
-                    const riderVehicle = (rider as any).vehicleType
-                      || (rider as any).vehicle
-                      || (rider as any).vehicleCategory
-                      || "";
-                    const riderRating = (rider as any).rating ?? (rider as any).avgRating ?? null;
-                    const riderTrips = (rider as any).totalTrips ?? (rider as any).completedTrips ?? null;
-                    const displayName = riderName || riderPhone || (rider._id ? String(rider._id).slice(-6) : `Rider ${idx + 1}`);
+                    // Simple comparison: check if this rider is the selected one
+                    // Backend returns 'id' not '_id'
+                    const isSelected = selectedRider === rider || 
+                                      (selectedRider && rider && 
+                                       ((selectedRider.id && selectedRider.id === rider.id) || 
+                                        (selectedRider._id && selectedRider._id === rider._id) ||
+                                        (selectedRider.phone && selectedRider.phone === rider.phone)));
+                    
+                    // Try to get name from any possible field
+                    const riderName = rider.name || (rider as any).fullName || (rider as any).riderName || (rider as any).firstName || "";
+                    const riderPhone = rider.phone || (rider as any).phoneNumber || (rider as any).mobile || "";
+                    const displayName = riderName.trim() || riderPhone || `Rider ${idx + 1}`;
+                    
                     return (
                       <button
-                        key={rider._id || idx}
+                        key={`rider-${rider.id || rider._id || idx}`}
                         type="button"
-                        onClick={() => setSelectedRider(isSelected ? null : rider)}
+                        onClick={() => setSelectedRider(rider)}
                         className="w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition"
                         style={{
                           backgroundColor: isSelected ? `${COLORS.primary}12` : "transparent",
@@ -377,19 +367,17 @@ export default function ProductionPage() {
                           <p className="text-sm font-bold text-gray-900 truncate">{displayName}</p>
                           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                             {riderPhone && riderPhone !== displayName && <span className="text-xs text-gray-500">{riderPhone}</span>}
-                            {riderVehicle && (
+                            {rider.vehicleType && (
                               <span className="text-xs px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-600 flex items-center gap-1">
-                                <Bike size={10} /> {riderVehicle}
+                                <Bike size={10} /> {rider.vehicleType}
                               </span>
                             )}
-                            {riderRating != null && (
+                            {rider.rating != null && (
                               <span className="text-xs text-gray-500 flex items-center gap-0.5">
-                                <Star size={10} className="text-yellow-400" /> {Number(riderRating).toFixed(1)}
+                                <Star size={10} className="text-yellow-400" /> {Number(rider.rating).toFixed(1)}
                               </span>
                             )}
-                            {riderTrips != null && (
-                              <span className="text-xs text-gray-400">{riderTrips} trips</span>
-                            )}
+                            {rider.totalTrips != null && <span className="text-xs text-gray-400">{rider.totalTrips} trips</span>}
                           </div>
                         </div>
                       </button>
@@ -404,7 +392,7 @@ export default function ProductionPage() {
 
               {selectedRider && (
                 <p className="text-xs mt-2 font-semibold" style={{ color: COLORS.success }}>
-                  ✓ Selected: {selectedRider.name}
+                  ✓ Selected: {selectedRider.name || selectedRider.phone}
                 </p>
               )}
             </div>
@@ -429,18 +417,23 @@ export default function ProductionPage() {
                 onClick={async () => {
                   setHandoverBusy(true);
                   try {
-                    await handoverComplete(handoverOrder._id, {
-                      riderId: selectedRider?._id || undefined,
+                    const res = await handoverComplete(handoverOrder._id, {
+                      riderId: selectedRider?.id || selectedRider?._id || undefined,
                       note: handoverNote || undefined,
-                    }).catch(() => {});
-                    setOrders(cur => cur.filter(o => o._id !== handoverOrder._id));
+                    });
+                    setOrders(cur => cur.map(o => o._id === handoverOrder._id ? res.data : o));
                     setHandoverOrder(null);
                     setSelectedRider(null);
                     setHandoverNote("");
                     setRiderSearch("");
+                    // Show success message
+                    setError("");
+                    setTimeout(() => {
+                      setError("✅ Handover completed successfully!");
+                      setTimeout(() => setError(""), 3000);
+                    }, 100);
                   } catch (err) {
                     setError(err instanceof Error ? err.message : "Failed to complete handover");
-                    setHandoverOrder(null);
                   } finally {
                     setHandoverBusy(false);
                   }
