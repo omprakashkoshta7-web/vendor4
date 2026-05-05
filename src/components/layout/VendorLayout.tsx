@@ -7,7 +7,6 @@ import {
   ChevronDown,
   ClipboardList,
   CreditCard,
-  FileText,
   HeadphonesIcon,
   LayoutDashboard,
   LogOut,
