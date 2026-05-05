@@ -689,21 +689,11 @@ export default function JobDetailPage() {
               ) : filteredHandoverRiders.length > 0 ? (
                 <div className="max-h-44 overflow-y-auto space-y-1.5 rounded-xl border border-gray-200 p-2">
                   {filteredHandoverRiders.map((rider, idx) => {
-                    // Use phone as unique key if _id is missing/duplicate
-                    const riderId = rider._id || rider.phone || `rider-${idx}`;
-                    const selectedId = selectedHandoverRider?._id || selectedHandoverRider?.phone;
-                    
-                    // Debug: log rider ID and full object
-                    console.log(`🚴 Rider ${idx}:`, {
-                      _id: rider._id,
-                      phone: rider.phone,
-                      riderId: riderId,
-                      selectedId: selectedId,
-                      isSelected: riderId === selectedId
-                    });
-                    
-                    const isSelected = !!(riderId && selectedId && riderId === selectedId);
-                    console.log(`🚴 Rider ${idx} isSelected:`, isSelected);
+                    // Simple comparison: check if this rider is the selected one
+                    const isSelected = selectedHandoverRider === rider || 
+                                      (selectedHandoverRider && rider && 
+                                       (selectedHandoverRider._id === rider._id || 
+                                        selectedHandoverRider.phone === rider.phone));
                     
                     // Try to get name from any possible field
                     const riderName = rider.name || (rider as any).fullName || (rider as any).riderName || (rider as any).firstName || "";
@@ -711,9 +701,8 @@ export default function JobDetailPage() {
                     const displayName = riderName.trim() || riderPhone || `Rider ${idx + 1}`;
                     
                     return (
-                      <button key={`rider-${riderId}`} type="button"
+                      <button key={`rider-${idx}`} type="button"
                         onClick={() => {
-                          console.log("🚴 Selecting rider:", { riderId, displayName });
                           setSelectedHandoverRider(rider);
                         }}
                         className="w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition"
