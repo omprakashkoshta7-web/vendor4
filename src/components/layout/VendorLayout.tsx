@@ -61,7 +61,6 @@ const navGroups = [
     items: [
       { to: "/score", icon: Star, label: "Vendor Score", permissions: ["view_all"] },
       { to: "/org", icon: Building2, label: "Org Profile", permissions: ["org_settings", "view_all"] },
-      { to: "/legal", icon: FileText, label: "Legal Docs", permissions: ["org_settings", "view_all"] },
       { to: "/support", icon: HeadphonesIcon, label: "Support", permissions: ["view_all"] },
     ],
   },
@@ -78,7 +77,6 @@ const routeMeta = [
   { match: "/payouts", title: "Payouts", caption: "Payout history, schedule and wallet balance." },
   { match: "/score", title: "Vendor Score", caption: "Performance score, metrics and order closure." },
   { match: "/org", title: "Org Profile", caption: "Vendor organization profile and bank details." },
-  { match: "/legal", title: "Legal Documents", caption: "GST, PAN, registration documents and agreement status." },
   { match: "/support", title: "Support", caption: "Raise and manage support tickets." },
 ];
 
