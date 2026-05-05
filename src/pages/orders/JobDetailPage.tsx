@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, CheckCircle, PlayCircle, ShieldCheck,
   Truck, XCircle, Camera, RefreshCw, Package,
-  Clock, X, Upload
+  Clock, X, Upload, Search, Star, Bike
 } from "lucide-react";
 import LoadingState from "../../components/ui/LoadingState";
 import Alert from "../../components/ui/Alert";
@@ -18,6 +18,8 @@ import {
   startVendorProduction,
   markVendorQcPending,
   handoverComplete,
+  getAvailableDeliveryPartners,
+  type DeliveryPartner,
 } from "../../services/vendor.service";
 import type { VendorOrder } from "../../types/vendor";
 
@@ -64,8 +66,44 @@ export default function JobDetailPage() {
 
   // Handover modal
   const [showHandoverModal, setShowHandoverModal] = useState(false);
-  const [handoverRiderId, setHandoverRiderId] = useState("");
   const [handoverNote, setHandoverNote] = useState("");
+  const [handoverRiders, setHandoverRiders] = useState<DeliveryPartner[]>([]);
+  const [handoverRidersLoading, setHandoverRidersLoading] = useState(false);
+  const [handoverRiderSearch, setHandoverRiderSearch] = useState("");
+  const [selectedHandoverRider, setSelectedHandoverRider] = useState<DeliveryPartner | null>(null);
+
+  const openHandoverModal = async () => {
+    setShowHandoverModal(true);
+    setSelectedHandoverRider(null);
+    setHandoverRiderSearch("");
+    setHandoverNote("");
+    setHandoverRidersLoading(true);
+    try {
+      const res = await getAvailableDeliveryPartners({ limit: 20 });
+      console.log("🚴 Riders API Response:", res);
+      const raw = res.data;
+      console.log("🚴 Raw data:", raw);
+      const list: DeliveryPartner[] = Array.isArray(raw) ? raw
+        : Array.isArray((raw as any)?.riders) ? (raw as any).riders
+        : Array.isArray((raw as any)?.deliveryPartners) ? (raw as any).deliveryPartners
+        : [];
+      console.log("🚴 Processed riders list:", list);
+      setHandoverRiders(list);
+    } catch (err) {
+      console.error("❌ Error loading riders:", err);
+      setHandoverRiders([]);
+    }
+    finally { setHandoverRidersLoading(false); }
+  };
+
+  const filteredHandoverRiders = handoverRiderSearch.trim()
+    ? handoverRiders.filter(r => {
+        const name = r.name || "";
+        const phone = r.phone || "";
+        const s = handoverRiderSearch.toLowerCase();
+        return name.toLowerCase().includes(s) || phone.includes(handoverRiderSearch);
+      })
+    : handoverRiders;
 
   // API 2: GET /api/vendor/orders/:id
   const loadOrder = async () => {
@@ -359,7 +397,7 @@ export default function JobDetailPage() {
 
             {/* Handover Complete — POST /handover-complete */}
             {canHandover && (
-              <button onClick={() => setShowHandoverModal(true)}
+              <button onClick={() => void openHandoverModal()}
                 className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition"
                 style={{ backgroundColor: COLORS.primary }}>
                 <Truck size={15} /> Handover to Rider
@@ -622,32 +660,116 @@ export default function JobDetailPage() {
               <h3 className="text-lg font-bold text-gray-900">Handover to Rider</h3>
               <button onClick={() => setShowHandoverModal(false)}><X size={18} className="text-gray-400" /></button>
             </div>
+
+            {/* Order info */}
             <div className="p-3 rounded-xl border mb-4"
               style={{ backgroundColor: COLORS.infoBg, borderColor: COLORS.infoBorder }}>
               <p className="text-xs font-bold" style={{ color: COLORS.info }}>
-                Confirm that the package has been physically handed over to the delivery rider.
+                Order: <span className="font-mono">{order?.orderNumber || `#${id.slice(-8).toUpperCase()}`}</span>
+              </p>
+              <p className="text-xs mt-1" style={{ color: COLORS.info }}>
+                Confirm physical handover of package to delivery rider.
               </p>
             </div>
-            <div className="space-y-4 mb-5">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">
-                  Rider ID (optional)
-                </label>
-                <input value={handoverRiderId} onChange={e => setHandoverRiderId(e.target.value)}
-                  placeholder="Enter rider ID if known"
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:border-gray-900 transition font-mono" />
+
+            {/* Rider Search + Dropdown */}
+            <div className="mb-4">
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">
+                Select Rider <span className="text-gray-400 font-normal normal-case">(optional)</span>
+              </label>
+              <div className="relative mb-2">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input value={handoverRiderSearch} onChange={e => setHandoverRiderSearch(e.target.value)}
+                  placeholder="Search by name or phone..."
+                  className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-gray-900 transition" />
               </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">
-                  Note (optional)
-                </label>
-                <textarea value={handoverNote} onChange={e => setHandoverNote(e.target.value)}
-                  placeholder="Any handover notes..."
-                  className="w-full h-20 rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition resize-none" />
-              </div>
+
+              {handoverRidersLoading ? (
+                <div className="text-center py-4 text-xs text-gray-400">Loading riders...</div>
+              ) : filteredHandoverRiders.length > 0 ? (
+                <div className="max-h-44 overflow-y-auto space-y-1.5 rounded-xl border border-gray-200 p-2">
+                  {filteredHandoverRiders.map((rider, idx) => {
+                    // Debug: log rider ID and full object
+                    console.log(`🚴 Rider ${idx}:`, {
+                      _id: rider._id,
+                      name: rider.name,
+                      phone: rider.phone,
+                      selectedId: selectedHandoverRider?._id,
+                      fullRider: rider
+                    });
+                    
+                    const isSelected = !!(selectedHandoverRider && selectedHandoverRider._id && rider._id && selectedHandoverRider._id === rider._id);
+                    console.log(`🚴 Rider ${idx} isSelected:`, isSelected);
+                    
+                    // Try to get name from any possible field
+                    const riderName = rider.name || (rider as any).fullName || (rider as any).riderName || (rider as any).firstName || "";
+                    const riderPhone = rider.phone || (rider as any).phoneNumber || (rider as any).mobile || "";
+                    const displayName = riderName.trim() || riderPhone || `Rider ${idx + 1}`;
+                    
+                    return (
+                      <button key={`rider-${idx}-${rider._id}`} type="button"
+                        onClick={() => {
+                          console.log("🚴 Selecting rider:", rider);
+                          setSelectedHandoverRider(rider);
+                        }}
+                        className="w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition"
+                        style={{
+                          backgroundColor: isSelected ? `${COLORS.primary}12` : "transparent",
+                          border: `1.5px solid ${isSelected ? COLORS.primary : "transparent"}`,
+                        }}>
+                        <div className="w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0"
+                          style={{ borderColor: isSelected ? COLORS.primary : "#d1d5db" }}>
+                          {isSelected && <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.primary }} />}
+                        </div>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                          style={{ backgroundColor: isSelected ? COLORS.primary : "#94a3b8" }}>
+                          {displayName.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-gray-900 truncate">{displayName}</p>
+                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                            {riderPhone && riderPhone !== displayName && <span className="text-xs text-gray-500">{riderPhone}</span>}
+                            {rider.vehicleType && (
+                              <span className="text-xs px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-600 flex items-center gap-1">
+                                <Bike size={10} /> {rider.vehicleType}
+                              </span>
+                            )}
+                            {rider.rating != null && (
+                              <span className="text-xs text-gray-500 flex items-center gap-0.5">
+                                <Star size={10} className="text-yellow-400" /> {Number(rider.rating).toFixed(1)}
+                              </span>
+                            )}
+                            {rider.totalTrips != null && <span className="text-xs text-gray-400">{rider.totalTrips} trips</span>}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-3 text-xs text-gray-400 border border-gray-200 rounded-xl">
+                  {handoverRiderSearch ? "No riders match your search" : "No riders available"}
+                </div>
+              )}
+              {selectedHandoverRider && (
+                <p className="text-xs mt-2 font-semibold" style={{ color: COLORS.success }}>
+                  ✓ Selected: {selectedHandoverRider.name}
+                </p>
+              )}
             </div>
+
+            {/* Note */}
+            <div className="mb-5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">
+                Note <span className="text-gray-400 font-normal normal-case">(optional)</span>
+              </label>
+              <textarea value={handoverNote} onChange={e => setHandoverNote(e.target.value)}
+                placeholder="Any handover notes..."
+                className="w-full h-16 rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition resize-none" />
+            </div>
+
             <div className="flex gap-3">
-              <button onClick={() => setShowHandoverModal(false)}
+              <button onClick={() => { setShowHandoverModal(false); setSelectedHandoverRider(null); setHandoverNote(""); }}
                 className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
                 Cancel
               </button>
@@ -657,12 +779,12 @@ export default function JobDetailPage() {
                   setBusyAction("handover");
                   try {
                     const res = await handoverComplete(order._id, {
-                      riderId: handoverRiderId || undefined,
+                      riderId: selectedHandoverRider?._id || undefined,
                       note: handoverNote || undefined,
                     });
                     setOrder(res.data);
                     setShowHandoverModal(false);
-                    setHandoverRiderId("");
+                    setSelectedHandoverRider(null);
                     setHandoverNote("");
                   } catch (err) {
                     setError(err instanceof Error ? err.message : "Failed to complete handover");

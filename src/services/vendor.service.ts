@@ -752,20 +752,17 @@ export async function markVendorReadyForPickup(id: string) {
 }
 
 // GET /api/vendor/delivery-partners/available
+// Backend returns: name, phone, vehicleType, zoneAssignments, rating, totalTrips
 export interface DeliveryPartner {
   _id: string;
-  name?: string;
-  fullName?: string;       // alternate field name
-  riderName?: string;      // alternate field name
-  phone?: string;
-  phoneNumber?: string;    // alternate field name
-  vehicleType?: string;
-  vehicle?: string;        // alternate field name
-  zoneAssignments?: string[];
-  rating?: number;
-  totalTrips?: number;
-  isAvailable?: boolean;
-  [key: string]: unknown;  // allow any extra fields
+  name: string;                    // Rider name
+  phone: string;                   // Phone number
+  vehicleType: string;             // bike, scooter, car, etc.
+  zoneAssignments: string[];       // Zones assigned to rider
+  rating: number;                  // Rating (0-5)
+  totalTrips: number;              // Total completed trips
+  isAvailable?: boolean;           // Optional: availability status
+  [key: string]: unknown;          // Allow extra fields from backend
 }
 
 export async function getAvailableDeliveryPartners(params?: { search?: string; limit?: number }) {
