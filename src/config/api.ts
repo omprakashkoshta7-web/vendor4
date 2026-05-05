@@ -1,7 +1,7 @@
-export const API_BASE_URL = `${import.meta.env.VITE_API_URL || "https://gateway-202671058278.asia-east1.run.app"}/api`;
+export const API_BASE_URL = `${import.meta.env.VITE_API_URL || "https://gateway-202671058278.asia-south1.run.app"}/api`;
 
 // Finance Service runs on a separate gateway
-export const FINANCE_BASE_URL = `${import.meta.env.VITE_FINANCE_API_URL || import.meta.env.VITE_API_URL || "https://gateway-202671058278.asia-east1.run.app"}/api`;
+export const FINANCE_BASE_URL = `${import.meta.env.VITE_FINANCE_API_URL || import.meta.env.VITE_API_URL || "https://gateway-202671058278.asia-south1.run.app"}/api`;
 
 export const API_ENDPOINTS = {
   // Auth endpoints

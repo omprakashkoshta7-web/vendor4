@@ -45,7 +45,7 @@ export interface NotificationQueryParams {
 
 // ── Service ───────────────────────────────────────────────────────────────────
 export const notificationService = {
-  // GET /api/vendor/notifications — paginated list with filters
+  // GET /api/notifications — paginated list with filters
   getList(params: NotificationQueryParams = {}) {
     const q = new URLSearchParams();
     if (params.isRead !== undefined) q.set("isRead", String(params.isRead));
@@ -55,29 +55,29 @@ export const notificationService = {
     if (params.limit) q.set("limit", String(params.limit));
     const qs = q.toString();
     return apiRequest<{ success: boolean; data: NotificationListResponse }>(
-      `/vendor/notifications${qs ? `?${qs}` : ""}`
+      `/notifications${qs ? `?${qs}` : ""}`
     );
   },
 
-  // GET /api/vendor/notifications/summary — unread count + category breakdown
+  // GET /api/notifications/summary — unread count + category breakdown
   getSummary() {
     return apiRequest<{ success: boolean; data: NotificationSummary }>(
-      "/vendor/notifications/summary"
+      "/notifications/summary"
     );
   },
 
-  // PATCH /api/vendor/notifications/:id/read — mark single as read
+  // PATCH /api/notifications/:id/read — mark single as read
   markRead(id: string) {
     return apiRequest<{ success: boolean; message: string; data: Partial<PortalNotification> }>(
-      `/vendor/notifications/${id}/read`,
+      `/notifications/${id}/read`,
       { method: "PATCH" }
     );
   },
 
-  // PATCH /api/vendor/notifications/read-all — mark all as read
+  // PATCH /api/notifications/read-all — mark all as read
   markAllRead() {
     return apiRequest<{ success: boolean; message: string; data: null }>(
-      "/vendor/notifications/read-all",
+      "/notifications/read-all",
       { method: "PATCH" }
     );
   },
