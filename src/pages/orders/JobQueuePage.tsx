@@ -125,7 +125,7 @@ export default function JobQueuePage() {
     }
   };
 
-  const FILTERS = ["all", "pending", "accepted", "production", "qc", "ready", "delivered"];
+  const FILTERS = ["all", "pending", "accepted", "production", "qc", "ready", "delivery", "delivered"];
 
   return (
     <div className="space-y-6">
